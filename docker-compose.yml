@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  # For local development we provide a MongoDB container that can serve as a local stand-in for
+  # Azure Cosmos DB (Mongo API). For production, replace COSMOS_MONGO_URI in .env with your Cosmos connection string.
+  mongo:
+    image: mongo:6.0
+    container_name: local_cosmos_mongo_emulator
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: hilton_reservations
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: hilton_backend
+    restart: unless-stopped
+    env_file:
+      - backend/.env.example
+    environment:
+      COSMOS_MONGO_URI: mongodb://mongo:27017/hilton_reservations
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: hilton_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

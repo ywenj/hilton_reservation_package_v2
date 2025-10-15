@@ -1,0 +1,8 @@
+FROM node:20-alpine
+WORKDIR /usr/src/app
+COPY backend/package.json backend/package-lock.json* ./backend/
+COPY backend ./backend
+WORKDIR /usr/src/app/backend
+RUN npm install
+EXPOSE 4000
+CMD ["npm", "run", "start:dev"]

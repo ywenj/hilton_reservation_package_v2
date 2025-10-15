@@ -1,0 +1,16 @@
+{
+  "name": "hilton-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@apollo/client": "^3.8.0",
+    "graphql": "^16.6.0"
+  }
+}

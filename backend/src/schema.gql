@@ -1,0 +1,38 @@
+type Reservation {
+  _id: ID!
+  guestName: String!
+  contactPhone: String!
+  contactEmail: String
+  expectedArrival: String!
+  tableSize: Int!
+  status: String!
+  createdAt: String
+  updatedAt: String
+}
+
+input CreateReservationInput {
+  guestName: String!
+  contactPhone: String!
+  contactEmail: String
+  expectedArrival: String!
+  tableSize: Int!
+}
+
+input UpdateReservationInput {
+  guestName: String
+  contactPhone: String
+  contactEmail: String
+  expectedArrival: String
+  tableSize: Int
+}
+
+type Query {
+  reservations(date: String, status: String): [Reservation!]!
+  reservation(id: ID!): Reservation
+}
+
+type Mutation {
+  createReservation(input: CreateReservationInput!): Reservation!
+  updateReservation(id: ID!, input: UpdateReservationInput!): Reservation!
+  setReservationStatus(id: ID!, status: String!): Reservation!
+}
