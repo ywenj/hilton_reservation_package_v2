@@ -3,6 +3,7 @@
 # compiled output
 /dist
 /auth-service/dist
+/reservation-service/dist
 /tmp
 /out-tsc
 

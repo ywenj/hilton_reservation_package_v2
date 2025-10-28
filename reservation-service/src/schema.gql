@@ -1,3 +1,7 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
 type Reservation {
   _id: ID!
   guestName: String!
@@ -5,9 +9,26 @@ type Reservation {
   contactEmail: String
   expectedArrival: String!
   tableSize: Int!
-  status: String!
-  createdAt: String
-  updatedAt: String
+  status: ReservationStatus!
+}
+
+enum ReservationStatus {
+  Requested
+  Confirmed
+  Seated
+  Completed
+  Cancelled
+}
+
+type Query {
+  reservations(date: String, status: String): [Reservation!]!
+  reservation(id: String!): Reservation
+}
+
+type Mutation {
+  createReservation(input: CreateReservationInput!): Reservation!
+  updateReservation(id: String!, input: UpdateReservationInput!): Reservation!
+  setReservationStatus(id: String!, status: String!): Reservation!
 }
 
 input CreateReservationInput {
@@ -24,15 +45,4 @@ input UpdateReservationInput {
   contactEmail: String
   expectedArrival: String
   tableSize: Int
-}
-
-type Query {
-  reservations(date: String, status: String): [Reservation!]!
-  reservation(id: ID!): Reservation
-}
-
-type Mutation {
-  createReservation(input: CreateReservationInput!): Reservation!
-  updateReservation(id: ID!, input: UpdateReservationInput!): Reservation!
-  setReservationStatus(id: ID!, status: String!): Reservation!
 }

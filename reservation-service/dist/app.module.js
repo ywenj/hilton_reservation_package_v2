@@ -44,7 +44,6 @@ const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const graphql_1 = require("@nestjs/graphql");
 const apollo_1 = require("@nestjs/apollo");
-const default_1 = require("@apollo/server/plugin/landingPage/default");
 const path_1 = require("path");
 const dotenv = __importStar(require("dotenv"));
 dotenv.config({ path: ".env" });
@@ -60,9 +59,20 @@ exports.AppModule = AppModule = __decorate([
             graphql_1.GraphQLModule.forRoot({
                 driver: apollo_1.ApolloDriver,
                 autoSchemaFile: (0, path_1.join)(process.cwd(), "src/schema.gql"),
-                plugins: process.env.GRAPHQL_PLAYGROUND === "true"
-                    ? [(0, default_1.ApolloServerPluginLandingPageLocalDefault)()]
-                    : [],
+                plugins: [],
+                formatError: (formattedError) => {
+                    const { message, extensions } = formattedError;
+                    return {
+                        message,
+                        extensions: {
+                            code: extensions === null || extensions === void 0 ? void 0 : extensions.code,
+                            status: extensions === null || extensions === void 0 ? void 0 : extensions.status,
+                            details: extensions === null || extensions === void 0 ? void 0 : extensions.details,
+                            timestamp: extensions === null || extensions === void 0 ? void 0 : extensions.timestamp,
+                            path: extensions === null || extensions === void 0 ? void 0 : extensions.path,
+                        },
+                    };
+                },
                 context: ({ req }) => ({ req }),
             }),
             reservations_module_1.ReservationsModule,
