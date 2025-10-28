@@ -4,7 +4,8 @@ import { GraphQLModule } from "@nestjs/graphql";
 import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { ApolloServerPluginLandingPageLocalDefault } from "@apollo/server/plugin/landingPage/default";
 import { join } from "path";
-import { AuthModule } from "./auth/auth.module";
+import * as dotenv from "dotenv";
+dotenv.config({ path: ".env" });
 import { ReservationsModule } from "./reservations/reservations.module";
 
 @Module({
@@ -21,9 +22,8 @@ import { ReservationsModule } from "./reservations/reservations.module";
         process.env.GRAPHQL_PLAYGROUND === "true"
           ? [ApolloServerPluginLandingPageLocalDefault()]
           : [],
-      context: ({ req }) => ({ req }),
+      context: ({ req }: { req: Request }) => ({ req }),
     }),
-    AuthModule,
     ReservationsModule,
   ],
 })
