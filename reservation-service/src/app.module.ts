@@ -18,6 +18,7 @@ import { ReservationsModule } from "./reservations/reservations.module";
       autoSchemaFile: join(process.cwd(), "src/schema.gql"),
       // Landing page plugin removed to avoid duplicate renderLandingPage error with implicit default.
       plugins: [],
+      validationRules: [require("graphql-depth-limit")(3)],
       formatError: (formattedError) => {
         const { message, extensions } = formattedError;
         // Remove stack traces / locations.
