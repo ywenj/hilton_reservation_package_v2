@@ -7,7 +7,19 @@ import { GlobalGraphQLExceptionFilter } from "./common/graphql-exception.filter"
 dotenv.config({ path: ".env" });
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+    .split(",")
+    .map((o) => o.trim());
+  const app = await NestFactory.create(AppModule, {
+    cors: {
+      origin: allowedOrigins,
+      credentials: true,
+      methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+      allowedHeaders: "Content-Type,Authorization",
+      exposedHeaders: "Content-Length",
+      maxAge: 3600,
+    },
+  });
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new GlobalGraphQLExceptionFilter());
 
