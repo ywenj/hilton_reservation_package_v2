@@ -4,6 +4,9 @@
 
 type Reservation {
   _id: ID!
+
+  """Owner user id (JWT sub)"""
+  userId: String
   guestName: String!
   contactPhone: String!
   contactEmail: String
@@ -22,6 +25,7 @@ enum ReservationStatus {
 
 type Query {
   reservations(date: String, status: String): [Reservation!]!
+  myReservations: [Reservation!]!
   reservation(id: String!): Reservation
 }
 

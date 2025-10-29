@@ -6,6 +6,7 @@ import { join } from "path";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env" });
 import { ReservationsModule } from "./reservations/reservations.module";
+import * as jwt from "jsonwebtoken";
 
 @Module({
   imports: [
@@ -33,7 +34,19 @@ import { ReservationsModule } from "./reservations/reservations.module";
           },
         };
       },
-      context: ({ req }: { req: Request }) => ({ req }),
+      context: ({ req }: { req: any }) => {
+        const auth = req.headers?.authorization || "";
+        const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+        let user: any = null;
+        if (token) {
+          try {
+            user = jwt.verify(token, process.env.JWT_SECRET || "dev-secret");
+          } catch (e) {
+            // ignore invalid token at context level; guard will enforce when needed
+          }
+        }
+        return { req, user };
+      },
     }),
     ReservationsModule,
   ],

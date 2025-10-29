@@ -17,7 +17,9 @@ export class ReservationsService {
     private readonly reservationModel: Model<Reservation>
   ) {}
 
-  async create(input: CreateReservationInput): Promise<Reservation> {
+  async create(
+    input: CreateReservationInput & { userId?: string }
+  ): Promise<Reservation> {
     // expectedArrival is ISO string already
     const created = await this.reservationModel.create({
       ...input,
@@ -47,6 +49,13 @@ export class ReservationsService {
     }
     return this.reservationModel
       .find(mongoFilters)
+      .sort({ expectedArrival: 1 })
+      .exec();
+  }
+
+  async findByUser(userId: string): Promise<Reservation[]> {
+    return this.reservationModel
+      .find({ userId })
       .sort({ expectedArrival: 1 })
       .exec();
   }

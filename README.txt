@@ -11,3 +11,18 @@ Changelog v2:
 - Added schema.gql example
 - Improved unit tests to mock Mongoose model methods
 - Adjusted backend Dockerfile for dev run
+
+Auth & Environment (Reservation Service):
+- Set JWT_SECRET in reservation-service/.env for token verification (default dev-secret used if unset; do not use in production).
+- Example reservation-service/.env:
+	COSMOS_MONGO_URI=mongodb://localhost:27017/hilton_reservations
+	JWT_SECRET=change_me_dev
+	CORS_ORIGINS=http://localhost:5173
+
+GraphQL Auth Usage:
+- Provide Authorization: Bearer <jwt> header. Token payload should include { sub: <userId>, role: 'guest' | 'employee' }.
+- Queries:
+	* myReservations: guest or employee.
+	* reservations (with filters): employee only.
+	* createReservation: guest or employee (auto associates userId from token).
+	* updateReservation / setReservationStatus: employee only.

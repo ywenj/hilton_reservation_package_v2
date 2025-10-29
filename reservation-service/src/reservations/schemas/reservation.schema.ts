@@ -17,6 +17,10 @@ export class Reservation extends Document {
   @Field(() => ID)
   _id!: string;
 
+  @Prop({ required: false, index: true })
+  @Field({ nullable: true, description: "Owner user id (JWT sub)" })
+  userId?: string;
+
   @Prop({ required: true })
   @Field()
   guestName!: string;
