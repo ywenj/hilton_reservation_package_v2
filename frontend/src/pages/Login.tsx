@@ -20,6 +20,10 @@ export default function LoginPage() {
         }
         const resp = await loginAuth(values.username, values.password);
         token = resp.access_token || "";
+        if (!token) {
+          message.error("用户名或密码错误");
+          return;
+        }
         user = { id: "employee", role: "employee", name: values.username };
       } else {
         if (!values.email || !values.phone) {
