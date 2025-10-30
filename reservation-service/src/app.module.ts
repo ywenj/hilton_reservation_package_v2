@@ -6,7 +6,6 @@ import { join } from "path";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env" });
 import { ReservationsModule } from "./reservations/reservations.module";
-import * as jwt from "jsonwebtoken";
 
 @Module({
   imports: [
@@ -34,15 +33,26 @@ import * as jwt from "jsonwebtoken";
           },
         };
       },
-      context: ({ req }: { req: any }) => {
+      context: async ({ req }: { req: any }) => {
         const auth = req.headers?.authorization || "";
-        const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+        const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+        const url = process.env.AUTH_INTROSPECTION_URL;
         let user: any = null;
-        if (token) {
+        if (url && token) {
           try {
-            user = jwt.verify(token, process.env.JWT_SECRET || "dev-secret");
-          } catch (e) {
-            // ignore invalid token at context level; guard will enforce when needed
+            const { IntrospectionClient } = await import(
+              "./common/auth/introspection.client"
+            );
+            const client = new IntrospectionClient(
+              url,
+              Number(process.env.INTROSPECTION_CACHE_TTL_MS) || 30000
+            );
+            const r = await client.introspect(token);
+            if (r.active) {
+              user = { sub: r.sub, role: r.role, username: r.username };
+            }
+          } catch (_) {
+            // swallow errors; unauthenticated
           }
         }
         return { req, user };
