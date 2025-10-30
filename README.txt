@@ -38,3 +38,30 @@ GraphQL Auth Usage:
 	* reservations (with filters): employee only.
 	* createReservation: guest or employee (auto associates userId from token).
 	* updateReservation / setReservationStatus: employee only.
+
+Frontend Environment Variables:
+- Create frontend/.env (or export before running Vite):
+  VITE_GRAPHQL_ENDPOINT=http://localhost:3002/graphql
+  VITE_AUTH_BASE_URL=http://localhost:3001
+
+Role-Based Frontend Flow (v2 UX):
+- Guest login: email only (demo), sees Reservations list and Register page.
+- Employee login: email + password, redirected to Admin page (status management) only.
+- Menu items adjust dynamically: Guest => Reservations, Register. Employee => Admin.
+
+Auth API Integration (frontend/src/api/auth.ts):
+- POST /auth/login { username, password } -> { access_token }
+- POST /auth/register { username, password, role } -> { id, username, role }
+- POST /auth/introspect { token } -> { active, sub, role, exp }
+
+Local Dev Quick Start:
+1. Start auth-service (default port 3001).
+2. Start reservation-service (configure to port 3002 if needed).
+3. Set env vars for frontend and run `npm run dev` (Vite default 5173).
+4. Login as employee (must pre-create user via /auth/register or direct DB insert) to access Admin page.
+5. Login as guest to create and view own reservations.
+
+Future Enhancements:
+- Replace guest demo token with real JWT issuance on registration.
+- Add optimistic Apollo cache updates for status changes.
+- Add pagination and advanced filtering on reservation list.

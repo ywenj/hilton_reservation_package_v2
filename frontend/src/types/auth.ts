@@ -4,6 +4,7 @@ export interface AuthUser {
   role: UserRole;
   name?: string;
   email?: string;
+  phone?: string;
 }
 export interface AuthState {
   user: AuthUser | null;

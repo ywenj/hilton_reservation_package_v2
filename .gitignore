@@ -4,6 +4,7 @@
 /dist
 /auth-service/dist
 /reservation-service/dist
+/frontend/dist
 /tmp
 /out-tsc
 

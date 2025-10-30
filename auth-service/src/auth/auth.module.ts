@@ -8,6 +8,8 @@ import { IntrospectionService } from "./introspection.service";
 import { User, UserSchema } from "./schemas/user.schema";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { BasicStrategy } from "./strategies/basic.strategy";
+import * as dotenv from "dotenv";
+dotenv.config({ path: ".env" });
 
 @Module({
   imports: [

@@ -21,7 +21,11 @@ export class IntrospectionService {
         exp: payload.exp,
         iat: payload.iat,
       };
-    } catch (_) {
+    } catch (e) {
+      console.error("[IntrospectionService] Token verification failed:", {
+        errorName: (e as Error)?.name,
+        errorMessage: (e as Error)?.message,
+      });
       return { active: false };
     }
   }

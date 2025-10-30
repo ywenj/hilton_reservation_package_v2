@@ -2,32 +2,53 @@ import React from "react";
 import { Form, Input, Button, Card, Typography, message, Select } from "antd";
 import { useAuth } from "../auth/AuthContext";
 import { AuthUser, UserRole } from "../types/auth";
+import { loginAuth } from "../api/auth";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [form] = Form.useForm();
 
   const onFinish = async (values: any) => {
-    // TODO: call real auth REST endpoint
-    // Simulate token + user retrieval
-    const fakeToken = "fake-jwt-token";
-    const user: AuthUser = {
-      id: "u-" + Date.now(),
-      role: values.role as UserRole,
-      name: values.name,
-      email: values.email,
-    };
-    login(fakeToken, user);
-    message.success("登录成功");
+    const role = values.role as UserRole;
+    try {
+      let token = "";
+      let user: AuthUser;
+      if (role === "employee") {
+        if (!values.username || !values.password) {
+          message.error("Username and password required");
+          return;
+        }
+        const resp = await loginAuth(values.username, values.password);
+        token = resp.access_token || "";
+        user = { id: "employee", role: "employee", name: values.username };
+      } else {
+        if (!values.email || !values.phone) {
+          message.error("Email and phone required");
+          return;
+        }
+        token = "guest-session-" + Date.now();
+        user = {
+          id: "guest-" + Date.now(),
+          role: "guest",
+          email: values.email,
+          phone: values.phone,
+        };
+      }
+      login(token, user);
+      message.success("Login successful");
+      window.location.replace(role === "employee" ? "/admin" : "/reservations");
+    } catch (e: any) {
+      message.error(e.message || "Login failed");
+    }
   };
 
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-      <Card title="登录" style={{ width: 400 }}>
+      <Card title="Login" style={{ width: 360 }}>
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item
             name="role"
-            label="角色"
+            label="Role"
             initialValue="guest"
             rules={[{ required: true }]}
           >
@@ -38,33 +59,71 @@ export default function LoginPage() {
               ]}
             />
           </Form.Item>
-          <Form.Item
-            name="name"
-            label="姓名"
-            rules={[{ required: true, message: "请输入姓名" }]}
-          >
-            <Input />
+          <Form.Item shouldUpdate>
+            {() => {
+              const role = form.getFieldValue("role");
+              if (role === "employee") {
+                return (
+                  <Form.Item
+                    name="username"
+                    label="Username"
+                    rules={[{ required: true, message: "Username required" }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                );
+              }
+              return (
+                <Form.Item
+                  name="email"
+                  label="Email"
+                  rules={[
+                    {
+                      type: "email",
+                      required: true,
+                      message: "Email required",
+                    },
+                  ]}
+                >
+                  <Input />
+                </Form.Item>
+              );
+            }}
           </Form.Item>
-          <Form.Item
-            name="email"
-            label="邮箱"
-            rules={[{ type: "email", required: true, message: "请输入邮箱" }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label="密码"
-            rules={[{ required: true, message: "请输入密码" }]}
-          >
-            <Input.Password />
+          <Form.Item shouldUpdate>
+            {() => {
+              const role = form.getFieldValue("role");
+              return role === "employee" ? (
+                <Form.Item
+                  name="password"
+                  label="Password"
+                  rules={[{ required: true, message: "Password required" }]}
+                >
+                  <Input.Password />
+                </Form.Item>
+              ) : (
+                <Form.Item
+                  name="phone"
+                  label="Phone"
+                  rules={[
+                    { required: true, message: "Phone required" },
+                    {
+                      pattern: /^1[3-9]\d{9}$/,
+                      message: "Invalid phone number",
+                    },
+                  ]}
+                >
+                  <Input maxLength={11} />
+                </Form.Item>
+              );
+            }}
           </Form.Item>
           <Button type="primary" htmlType="submit" block>
-            登录
+            Login
           </Button>
         </Form>
         <Typography.Paragraph style={{ marginTop: 16 }}>
-          没有账号？<a href="/register">注册</a>
+          Employee? <a href="/register">Register</a>
         </Typography.Paragraph>
       </Card>
     </div>

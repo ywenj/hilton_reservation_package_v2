@@ -2,11 +2,10 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ApolloProvider } from "@apollo/client";
 import { apolloClient } from "./apollo/client";
-import Home from "./pages/Home";
+import Home from "./pages/Home"; // guest reservation list
 import ReservationView from "./pages/ReservationView";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import MyReservations from "./pages/MyReservations";
 import AdminReservations from "./pages/AdminReservations";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AuthProvider } from "./auth/AuthContext";
@@ -23,16 +22,17 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             {/* Layout wrapper */}
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/reservations/:id" element={<ReservationView />} />
+              {/* Root route: if not logged in -> Login; if logged in -> Reservations list */}
+              <Route path="/" element={<Login />} />
               <Route
-                path="/my"
+                path="/reservations"
                 element={
                   <ProtectedRoute roles={["guest", "employee"]}>
-                    <MyReservations />
+                    <Home />
                   </ProtectedRoute>
                 }
               />
+              <Route path="/reservations/:id" element={<ReservationView />} />
               <Route
                 path="/admin"
                 element={
