@@ -8,12 +8,17 @@ import {
 } from "@nestjs/common";
 import { Request as ExpressRequest } from "express";
 import { AuthService } from "./auth.service";
+import { IntrospectionService } from "./introspection.service";
+import { IntrospectRequestDto } from "./dto/introspect.dto";
 import { BasicAuthGuard } from "./guards/basic-auth.guard";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 
 @Controller("auth")
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private introspectionService: IntrospectionService
+  ) {}
 
   @Post("register")
   async register(
@@ -43,5 +48,10 @@ export class AuthController {
   @Get("profile")
   async profile(@Request() req: ExpressRequest & { user?: any }) {
     return req.user;
+  }
+
+  @Post("introspect")
+  async introspect(@Body() body: IntrospectRequestDto) {
+    return this.introspectionService.introspect(body.token);
   }
 }

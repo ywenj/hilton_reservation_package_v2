@@ -4,6 +4,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
 import { AuthService } from "./auth.service";
 import { AuthController } from "./auth.controller";
+import { IntrospectionService } from "./introspection.service";
 import { User, UserSchema } from "./schemas/user.schema";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { BasicStrategy } from "./strategies/basic.strategy";
@@ -23,7 +24,7 @@ import { BasicStrategy } from "./strategies/basic.strategy";
     }),
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
-  providers: [AuthService, JwtStrategy, BasicStrategy],
+  providers: [AuthService, JwtStrategy, BasicStrategy, IntrospectionService],
   controllers: [AuthController],
   exports: [AuthService],
 })
