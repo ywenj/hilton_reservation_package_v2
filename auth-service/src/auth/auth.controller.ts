@@ -5,6 +5,7 @@ import {
   UseGuards,
   Request,
   Get,
+  BadRequestException,
 } from "@nestjs/common";
 import { Request as ExpressRequest } from "express";
 import { AuthService } from "./auth.service";
@@ -12,6 +13,10 @@ import { IntrospectionService } from "./introspection.service";
 import { IntrospectRequestDto } from "./dto/introspect.dto";
 import { BasicAuthGuard } from "./guards/basic-auth.guard";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { RegisterEmployeeDto } from "./dto/register-employee.dto";
+import { RegisterGuestDto } from "./dto/register-guest.dto";
+import { LoginEmployeeDto } from "./dto/login-employee.dto";
+import { LoginGuestDto } from "./dto/login-guest.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -20,28 +25,47 @@ export class AuthController {
     private introspectionService: IntrospectionService
   ) {}
 
-  @Post("register")
-  async register(
-    @Body() body: { username: string; password: string; role?: string }
-  ) {
-    return this.authService.register(body.username, body.password, body.role);
+  // Employee registration (username + password)
+  @Post("register/employee")
+  async registerEmployee(@Body() body: RegisterEmployeeDto) {
+    return this.authService.registerEmployee(body.username, body.password);
   }
 
-  @Post("login")
-  async login(@Body() body: { username: string; password: string }) {
-    const user = await this.authService.validateUser(
+  // Guest registration (email + phone 至少一个; 可选 username)
+  @Post("register/guest")
+  async registerGuest(@Body() body: RegisterGuestDto) {
+    if (!body.email && !body.phone) {
+      throw new BadRequestException("Email or phone required");
+    }
+    return this.authService.registerGuest({
+      email: body.email,
+      phone: body.phone,
+      username: body.username,
+    });
+  }
+
+  @Post("login/employee")
+  async loginEmployee(@Body() body: LoginEmployeeDto) {
+    const token = await this.authService.loginEmployee(
       body.username,
       body.password
     );
-    if (!user) return { error: "invalid credentials" };
-    return this.authService.login(user);
+    if (!token) return { error: "invalid credentials" };
+    return token;
   }
 
-  // Basic HTTP auth endpoint: client can send Basic auth and get a JWT token
+  @Post("login/guest")
+  async loginGuest(@Body() body: LoginGuestDto) {
+    const token = await this.authService.loginGuest(body.email, body.phone);
+    if (!token) return { error: "invalid credentials" };
+    return token;
+  }
+
+  // Basic HTTP auth endpoint retained for employees with Basic auth header
   @UseGuards(BasicAuthGuard)
   @Post("basic-login")
   async basicLogin(@Request() req: ExpressRequest & { user?: any }) {
-    return this.authService.login(req.user);
+    return this.authService.loginEmployee(req.user.username, req.user.password);
   }
 
   @UseGuards(JwtAuthGuard)
