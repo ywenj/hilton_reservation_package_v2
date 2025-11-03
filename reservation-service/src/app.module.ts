@@ -6,6 +6,7 @@ import { ApolloDriver, ApolloDriverConfig } from "@nestjs/apollo";
 import { join } from "path";
 import * as dotenv from "dotenv";
 import { IntrospectionClient } from "./common/auth/introspection.client";
+import { AuthSupportModule } from "./common/auth/auth-support.module";
 dotenv.config({ path: ".env" });
 
 // 通过 Nest 注入 IntrospectionClient，避免手动生命周期管理。
@@ -15,9 +16,10 @@ dotenv.config({ path: ".env" });
       process.env.COSMOS_MONGO_URI ||
         "mongodb://localhost:27017/hilton_reservations"
     ),
+    AuthSupportModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      imports: [],
+      imports: [AuthSupportModule],
       inject: [IntrospectionClient],
       useFactory: (introspectionClient: IntrospectionClient) => ({
         autoSchemaFile: join(process.cwd(), "src/schema.gql"),
@@ -47,7 +49,13 @@ dotenv.config({ path: ".env" });
             if (r.active) {
               return {
                 req,
-                user: { sub: r.sub, role: r.role, username: r.username },
+                user: {
+                  sub: r.sub,
+                  role: r.role,
+                  name: r.username,
+                  email: r.email,
+                  phone: r.phone,
+                },
               };
             }
           } catch {
@@ -59,17 +67,6 @@ dotenv.config({ path: ".env" });
     }),
     ReservationsModule,
   ],
-  providers: [
-    {
-      provide: IntrospectionClient,
-      useFactory: () =>
-        process.env.AUTH_INTROSPECTION_URL
-          ? new IntrospectionClient(
-              process.env.AUTH_INTROSPECTION_URL,
-              Number(process.env.INTROSPECTION_CACHE_TTL_MS) || 30000
-            )
-          : new IntrospectionClient("", 1), // 空 URL 时返回 inactive 结果
-    },
-  ],
+  providers: [],
 })
 export class AppModule {}

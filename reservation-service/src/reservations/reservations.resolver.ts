@@ -42,6 +42,7 @@ export class ReservationsResolver {
     return this.reservationsService.create({
       ...input,
       userId: user.sub,
+      guestName: user.name,
       contactEmail: user.email,
       contactPhone: user.phone,
     });

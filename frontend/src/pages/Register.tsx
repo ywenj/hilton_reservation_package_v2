@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Form, Input, Button, Card, Typography, message, Select } from "antd";
 import { registerEmployeeNew, registerGuest } from "../api/auth";
 
 export default function RegisterPage() {
   const [form] = Form.useForm();
+  const [role, setRole] = useState<string>("guest");
 
   const submit = async (values: any) => {
     const role = values.role;
@@ -48,80 +49,81 @@ export default function RegisterPage() {
           initialValues={{ role: "guest" }}
         >
           <Form.Item name="role" label="Role" rules={[{ required: true }]}>
-            {" "}
             <Select
+              value={role}
               options={[
                 { value: "guest", label: "Guest" },
                 { value: "employee", label: "Employee" },
               ]}
-            />{" "}
+              onChange={(val) => {
+                setRole(val);
+                if (val === "employee") {
+                  form.setFieldsValue({
+                    role: val,
+                    email: undefined,
+                    phone: undefined,
+                  });
+                } else {
+                  form.setFieldsValue({ role: val, password: undefined });
+                }
+              }}
+            />
           </Form.Item>
-          <Form.Item shouldUpdate>
-            {() => {
-              const role = form.getFieldValue("role");
-              return (
-                <>
-                  <Form.Item
-                    name="username"
-                    label="Username"
-                    rules={[{ required: true, message: "Username required" }]}
-                  >
-                    <Input autoComplete="username" />
-                  </Form.Item>
-                  {role === "employee" && (
-                    <Form.Item
-                      name="password"
-                      label="Password"
-                      rules={[
-                        {
-                          required: true,
-                          min: 6,
-                          message: "Password >= 6 chars",
-                        },
-                      ]}
-                    >
-                      {" "}
-                      <Input.Password />{" "}
-                    </Form.Item>
-                  )}
-                  {role === "guest" && (
-                    <>
-                      <Form.Item
-                        name="email"
-                        label="Email"
-                        rules={[{ type: "email", message: "Invalid email" }]}
-                      >
-                        <Input />
-                      </Form.Item>
-                      <Form.Item
-                        name="phone"
-                        label="Phone"
-                        rules={[
-                          {
-                            pattern:
-                              /^(?:\+?86)?(?:1[3-9]\d{9}|0\d{2,3}-?\d{7,8})$/,
-                            message: "手机号格式错误",
-                          },
-                        ]}
-                      >
-                        <Input placeholder="例如: 13812345678 或 010-12345678" />
-                      </Form.Item>
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "#888",
-                          marginTop: -4,
-                          marginBottom: 12,
-                        }}
-                      >
-                        Guest: Email 或 Phone 至少填写一个
-                      </div>
-                    </>
-                  )}
-                </>
-              );
-            }}
+          <Form.Item
+            name="username"
+            label="Username"
+            rules={[{ required: true, message: "Username required" }]}
+          >
+            <Input autoComplete="username" />
           </Form.Item>
+          {role === "employee" && (
+            <Form.Item
+              name="password"
+              label="Password"
+              rules={[
+                {
+                  required: true,
+                  min: 6,
+                  message: "Password >= 6 chars",
+                },
+              ]}
+            >
+              <Input.Password />
+            </Form.Item>
+          )}
+          {role === "guest" && (
+            <>
+              <Form.Item
+                name="email"
+                label="Email"
+                rules={[{ type: "email", message: "Invalid email" }]}
+              >
+                <Input />
+              </Form.Item>
+              <Form.Item
+                name="phone"
+                label="Phone"
+                rules={[
+                  {
+                    pattern: /^(?:\+?86)?(?:1[3-9]\d{9}|0\d{2,3}-?\d{7,8})$/,
+                    message: "手机号格式错误",
+                  },
+                ]}
+              >
+                <Input placeholder="例如: 13812345678 或 010-12345678" />
+              </Form.Item>
+              <div
+                style={{
+                  fontSize: 12,
+                  color: "#888",
+                  marginTop: -4,
+                  marginBottom: 12,
+                }}
+              >
+                Guest: Email 或 Phone 至少填写一个
+              </div>
+            </>
+          )}
           <Button type="primary" htmlType="submit" block>
             Register
           </Button>

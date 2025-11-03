@@ -20,6 +20,7 @@ export class ReservationsService {
   async create(
     input: CreateReservationInput & {
       userId?: string;
+      guestName?: string;
       contactEmail?: string;
       contactPhone?: string;
     }
