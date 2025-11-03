@@ -4,8 +4,7 @@ import { Document } from "mongoose";
 
 export enum ReservationStatus {
   Requested = "Requested",
-  Confirmed = "Confirmed",
-  Seated = "Seated",
+  Approved = "Approved",
   Completed = "Completed",
   Cancelled = "Cancelled",
 }

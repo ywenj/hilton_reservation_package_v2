@@ -17,8 +17,7 @@ type Reservation {
 
 enum ReservationStatus {
   Requested
-  Confirmed
-  Seated
+  Approved
   Completed
   Cancelled
 }

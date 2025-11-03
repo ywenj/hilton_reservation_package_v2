@@ -77,11 +77,9 @@ export const AppLayout: React.FC = () => {
     ? "/my"
     : location.pathname;
 
-  // 登录前显示登录/注册页不展示整体框架；登录后展示侧边栏和头部
+  // Only hide chrome on explicit auth pages; allow anonymous to see chrome for navigation
   const hideChrome =
-    !user ||
-    location.pathname === "/login" ||
-    location.pathname === "/register";
+    location.pathname === "/login" || location.pathname === "/register";
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
