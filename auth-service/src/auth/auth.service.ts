@@ -63,14 +63,15 @@ export class AuthService {
     phone?: string;
     username?: string;
   }) {
+    if (!data.username) {
+      throw new BadRequestException("Username is required");
+    }
     if (!data.email && !data.phone) {
       throw new BadRequestException("Email or phone is required");
     }
     try {
-      if (data.username) {
-        const u = await this.userModel.findOne({ username: data.username });
-        if (u) throw new BadRequestException("Username exists");
-      }
+      const u = await this.userModel.findOne({ username: data.username });
+      if (u) throw new BadRequestException("Username exists");
       if (data.email) {
         const e = await this.userModel.findOne({
           email: data.email.toLowerCase(),
@@ -93,6 +94,7 @@ export class AuthService {
         role: created.role,
         email: created.email,
         phone: created.phone,
+        username: created.username,
       };
     } catch (err: any) {
       if (err?.code === 11000) {

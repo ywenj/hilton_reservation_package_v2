@@ -18,7 +18,11 @@ export class ReservationsService {
   ) {}
 
   async create(
-    input: CreateReservationInput & { userId?: string }
+    input: CreateReservationInput & {
+      userId?: string;
+      contactEmail?: string;
+      contactPhone?: string;
+    }
   ): Promise<Reservation> {
     // expectedArrival is ISO string already
     const created = await this.reservationModel.create({

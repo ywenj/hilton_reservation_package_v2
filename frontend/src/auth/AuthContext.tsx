@@ -6,13 +6,16 @@ import React, {
   ReactNode,
 } from "react";
 import { AuthState, AuthUser, UserRole } from "../types/auth";
+import { introspectToken } from "../api/auth";
 
 interface AuthContextValue extends AuthState {
   login: (token: string, user: AuthUser) => void;
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined
+);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -20,15 +23,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem("auth");
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setUser(parsed.user);
-        setToken(parsed.token);
-      } catch {}
-    }
-    setLoading(false);
+    const init = async () => {
+      const stored = localStorage.getItem("auth");
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.token) {
+            try {
+              const infoResult = await introspectToken(parsed.token);
+              if ((infoResult as any).active) {
+                const info = infoResult as {
+                  active: boolean;
+                  sub: string;
+                  role: UserRole;
+                  username?: string;
+                };
+                setUser({
+                  id: info.sub,
+                  role: info.role,
+                  name: info.username,
+                });
+                setToken(parsed.token);
+              } else {
+                localStorage.removeItem("auth");
+              }
+            } catch {
+              localStorage.removeItem("auth");
+            }
+          }
+        } catch {}
+      }
+      setLoading(false);
+    };
+    init();
   }, []);
 
   const login = (t: string, u: AuthUser) => {

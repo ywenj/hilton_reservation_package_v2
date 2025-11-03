@@ -8,7 +8,7 @@ import {
   ToolOutlined,
   LoginOutlined,
 } from "@ant-design/icons";
-import { useLocation, useNavigate, Outlet, Link } from "react-router-dom";
+import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import type { MenuProps } from "antd";
 
@@ -32,27 +32,40 @@ export const AppLayout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const items: MenuProps["items"] = [
-    user &&
-      user.role === "guest" && {
-        key: "/reservations",
-        icon: <HomeOutlined />,
-        label: "Reservations",
-      },
-    user &&
-      user.role === "guest" && {
-        key: "/register",
-        icon: <PlusCircleOutlined />,
-        label: "Register",
-      },
-    user &&
-      user.role === "employee" && {
-        key: "/admin",
-        icon: <ToolOutlined />,
-        label: "Admin",
-      },
-    !user && { key: "/login", icon: <LoginOutlined />, label: "Login" },
-  ].filter(Boolean) as MenuProps["items"];
+  // 构建不同角色的侧边菜单项，便于后续扩展
+  const buildGuestItems = (): MenuProps["items"] => [
+    {
+      key: "/my",
+      icon: <HomeOutlined />,
+      label: "My Reservations",
+    },
+  ];
+  // 目前员工仅一个 Admin 菜单，将来可在此处扩展
+  const buildEmployeeItems = (): MenuProps["items"] => [
+    {
+      key: "/admin",
+      icon: <ToolOutlined />,
+      label: "Admin",
+    },
+  ];
+  const buildAnonymousItems = (): MenuProps["items"] => [
+    {
+      key: "/login",
+      icon: <LoginOutlined />,
+      label: "Login",
+    },
+    {
+      key: "/register",
+      icon: <PlusCircleOutlined />,
+      label: "Register",
+    },
+  ];
+
+  const items: MenuProps["items"] = !user
+    ? buildAnonymousItems()
+    : user.role === "guest"
+    ? buildGuestItems()
+    : buildEmployeeItems();
 
   const onMenuClick: MenuProps["onClick"] = (e) => {
     navigate(e.key);
@@ -60,73 +73,83 @@ export const AppLayout: React.FC = () => {
 
   const selectedKey = items?.some((i) => i && i.key === location.pathname)
     ? location.pathname
-    : location.pathname.startsWith("/reservations/")
-    ? "/reservations"
+    : location.pathname.startsWith("/my/")
+    ? "/my"
     : location.pathname;
+
+  // 登录前显示登录/注册页不展示整体框架；登录后展示侧边栏和头部
+  const hideChrome =
+    !user ||
+    location.pathname === "/login" ||
+    location.pathname === "/register";
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <>
-        <Button
-          size="small"
-          shape="circle"
-          type="default"
-          onClick={() => setCollapsed((c) => !c)}
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          style={{
-            position: "fixed",
-            top: "50%",
-            left: (collapsed ? 64 : 200) - 24,
-            transform: "translateY(-50%)",
-            zIndex: 1000,
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-          }}
-        />
-        <Header
-          style={{ display: "flex", alignItems: "center", padding: "0 16px" }}
-        >
-          <div style={{ color: "#fff", fontWeight: 600, marginRight: 24 }}>
-            Hilton Reservations Demo
-          </div>
-          <div style={{ flex: 1 }} />
-          {user && (
-            <Space>
-              <Typography.Text style={{ color: "#fff" }}>
-                Hi, {user.name || user.role}
-              </Typography.Text>
-              <Button
-                size="small"
-                onClick={() => {
-                  logout();
-                  navigate("/login");
-                }}
-              >
-                Logout
-              </Button>
-            </Space>
-          )}
-        </Header>
-      </>
-      <Layout>
-        <Sider
-          collapsible
-          collapsed={collapsed}
-          onCollapse={(c) => setCollapsed(c)}
-          breakpoint="lg"
-          collapsedWidth={64}
-          width={200}
-          style={{ background: "#fff" }}
-        >
-          <Menu
-            mode="inline"
-            selectedKeys={[selectedKey]}
-            items={items}
-            onClick={onMenuClick}
-            style={{ height: "100%", borderRight: 0 }}
+      {!hideChrome && (
+        <>
+          <Button
+            size="small"
+            shape="circle"
+            type="default"
+            onClick={() => setCollapsed((c) => !c)}
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            style={{
+              position: "fixed",
+              top: "50%",
+              left: (collapsed ? 64 : 200) - 24,
+              transform: "translateY(-50%)",
+              zIndex: 1000,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            }}
           />
-        </Sider>
+          <Header
+            style={{ display: "flex", alignItems: "center", padding: "0 16px" }}
+          >
+            <div style={{ color: "#fff", fontWeight: 600, marginRight: 24 }}>
+              Hilton Reservations Demo
+            </div>
+            <div style={{ flex: 1 }} />
+            {user && (
+              <Space>
+                <Typography.Text style={{ color: "#fff" }}>
+                  Hi, {user.name || user.role}
+                </Typography.Text>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    logout();
+                    navigate("/login");
+                  }}
+                >
+                  Logout
+                </Button>
+              </Space>
+            )}
+          </Header>
+        </>
+      )}
+      <Layout>
+        {!hideChrome && (
+          <Sider
+            collapsible
+            collapsed={collapsed}
+            onCollapse={(c) => setCollapsed(c)}
+            breakpoint="lg"
+            collapsedWidth={64}
+            width={200}
+            style={{ background: "#fff" }}
+          >
+            <Menu
+              mode="inline"
+              selectedKeys={[selectedKey]}
+              items={items}
+              onClick={onMenuClick}
+              style={{ height: "100%", borderRight: 0 }}
+            />
+          </Sider>
+        )}
         <Layout>
-          <Content style={{ padding: 24 }}>
+          <Content style={{ padding: hideChrome ? 0 : 24 }}>
             {loading ? (
               <div
                 style={{
@@ -141,9 +164,11 @@ export const AppLayout: React.FC = () => {
               <Outlet />
             )}
           </Content>
-          <Footer style={{ textAlign: "center" }}>
-            Hilton Reservation Demo ©2024
-          </Footer>
+          {!hideChrome && (
+            <Footer style={{ textAlign: "center" }}>
+              Hilton Reservation Demo ©2024
+            </Footer>
+          )}
         </Layout>
       </Layout>
     </Layout>

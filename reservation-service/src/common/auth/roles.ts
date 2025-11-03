@@ -8,6 +8,7 @@ export interface JwtUser {
   role: UserRole;
   name?: string;
   email?: string;
+  phone?: string;
   iat?: number;
   exp?: number;
 }

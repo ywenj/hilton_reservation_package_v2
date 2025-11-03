@@ -45,13 +45,17 @@ Frontend Environment Variables:
   VITE_AUTH_BASE_URL=http://localhost:3001
 
 Role-Based Frontend Flow (v2 UX):
-- Guest login: email only (demo), sees Reservations list and Register page.
-- Employee login: email + password, redirected to Admin page (status management) only.
-- Menu items adjust dynamically: Guest => Reservations, Register. Employee => Admin.
+Guest login: 使用 email 或 phone 至少一个；进入个人预约 (myReservations) 与创建预约。
+Employee login: 使用 username + password；进入预约管理与状态更新页面。
+菜单动态：Guest => My Reservations, Create. Employee => Admin Reservations。
 
 Auth API Integration (frontend/src/api/auth.ts):
-- POST /auth/login { username, password } -> { access_token }
-- POST /auth/register { username, password, role } -> { id, username, role }
+Employee:
+	POST /auth/register/employee { username, password } -> { id, username, role: 'employee' }
+	POST /auth/login/employee { username, password } -> { access_token }
+Guest:
+	POST /auth/register/guest { username, email?, phone? } (username 必填; email 或 phone 至少一个) -> { id, role: 'guest', username, email?, phone? }
+	POST /auth/login/guest { email?, phone? } (至少一个) -> { access_token }
 - POST /auth/introspect { token } -> { active, sub, role, exp }
 
 Local Dev Quick Start:
@@ -65,3 +69,5 @@ Future Enhancements:
 - Replace guest demo token with real JWT issuance on registration.
 - Add optimistic Apollo cache updates for status changes.
 - Add pagination and advanced filtering on reservation list.
+ - Password optional set/reset for guest accounts.
+ - Rate limiting login endpoints.

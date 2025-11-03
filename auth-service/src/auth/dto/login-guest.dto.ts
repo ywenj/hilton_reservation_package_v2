@@ -2,7 +2,7 @@ import { IsOptional, IsEmail, IsString, Matches } from "class-validator";
 
 export class LoginGuestDto {
   @IsOptional()
-  @IsEmail()
+  //   @IsEmail()
   email?: string;
 
   @IsOptional()

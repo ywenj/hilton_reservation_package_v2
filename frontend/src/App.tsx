@@ -7,6 +7,7 @@ import ReservationView from "./pages/ReservationView";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminReservations from "./pages/AdminReservations";
+import MyReservations from "./pages/MyReservations";
 import { ProtectedRoute } from "./auth/ProtectedRoute";
 import { AuthProvider } from "./auth/AuthContext";
 import AppLayout from "./layout/AppLayout";
@@ -25,14 +26,13 @@ export default function App() {
               {/* Root route: if not logged in -> Login; if logged in -> Reservations list */}
               <Route path="/" element={<Login />} />
               <Route
-                path="/reservations"
+                path="/my"
                 element={
-                  <ProtectedRoute roles={["guest", "employee"]}>
-                    <Home />
+                  <ProtectedRoute roles={["guest"]}>
+                    <MyReservations />
                   </ProtectedRoute>
                 }
               />
-              <Route path="/reservations/:id" element={<ReservationView />} />
               <Route
                 path="/admin"
                 element={

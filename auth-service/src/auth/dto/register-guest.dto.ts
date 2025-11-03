@@ -7,13 +7,12 @@ import {
 } from "class-validator";
 
 export class RegisterGuestDto {
-  // guest 不要求 username; 若提供则校验最小长度
-  @IsOptional()
+  // guest 用户名必填
   @IsString()
   @MinLength(3)
-  username?: string;
+  username!: string;
 
-  // guest 无需密码; 若提供则忽略/或未来支持设置
+  // 仍可选
   @IsOptional()
   @IsString()
   @MinLength(6)

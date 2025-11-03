@@ -1,61 +1,54 @@
 import React from "react";
 import { Form, Input, Button, Card, Typography, message, Select } from "antd";
 import { useAuth } from "../auth/AuthContext";
-import { AuthUser, UserRole } from "../types/auth";
-import { loginAuth } from "../api/auth";
+import { loginEmployee, loginGuest, introspectToken } from "../api/auth";
+import { UserRole } from "../types/auth";
 
 export default function LoginPage() {
   const { login } = useAuth();
   const [form] = Form.useForm();
 
-  const onFinish = async (values: any) => {
-    const role = values.role as UserRole;
+  const submit = async (values: any) => {
     try {
-      let token = "";
-      let user: AuthUser;
-      if (role === "employee") {
-        if (!values.username || !values.password) {
-          message.error("Username and password required");
-          return;
-        }
-        const resp = await loginAuth(values.username, values.password);
-        token = resp.access_token || "";
-        if (!token) {
-          message.error("用户名或密码错误");
-          return;
-        }
-        user = { id: "employee", role: "employee", name: values.username };
-      } else {
-        if (!values.email || !values.phone) {
-          message.error("Email and phone required");
-          return;
-        }
-        token = "guest-session-" + Date.now();
-        user = {
-          id: "guest-" + Date.now(),
-          role: "guest",
-          email: values.email,
-          phone: values.phone,
-        };
+      if (values.role === "employee") {
+        const resp = await loginEmployee(values.username, values.password);
+        const token = resp.access_token;
+        const info = (await introspectToken(token)) as IntrospectInfo;
+        if (!info.active) throw new Error("Token inactive");
+        login(token, {
+          id: info.sub || "",
+          role: info.role!,
+          name: info.username,
+        });
+        window.location.replace("/admin");
+        return;
       }
-      login(token, user);
-      message.success("Login successful");
-      window.location.replace(role === "employee" ? "/admin" : "/reservations");
-    } catch (e: any) {
-      message.error(e.message || "Login failed");
+      // guest
+      const resp = await loginGuest(values.email, values.phone);
+      const token = resp.access_token;
+      const info = (await introspectToken(token)) as IntrospectInfo;
+      if (!info.active) throw new Error("Token inactive");
+      login(token, {
+        id: info.sub || "",
+        role: info.role!,
+        name: info.username,
+      });
+      window.location.replace("/my");
+    } catch (err: any) {
+      message.error(err.message || "Login failed");
     }
   };
 
   return (
     <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-      <Card title="Login" style={{ width: 360 }}>
-        <Form form={form} layout="vertical" onFinish={onFinish}>
-          <Form.Item
-            name="role"
-            label="Role"
-            initialValue="guest"
-            rules={[{ required: true }]}
-          >
+      <Card title="Login" style={{ width: 420 }}>
+        <Form
+          layout="vertical"
+          form={form}
+          onFinish={submit}
+          initialValues={{ role: "guest" }}
+        >
+          <Form.Item name="role" label="Role" rules={[{ required: true }]}>
             <Select
               options={[
                 { value: "guest", label: "Guest" },
@@ -68,57 +61,68 @@ export default function LoginPage() {
               const role = form.getFieldValue("role");
               if (role === "employee") {
                 return (
+                  <>
+                    <Form.Item
+                      name="username"
+                      label="Username"
+                      rules={[{ required: true, message: "Username required" }]}
+                    >
+                      <Input autoComplete="username" />
+                    </Form.Item>
+                    <Form.Item
+                      name="password"
+                      label="Password"
+                      rules={[{ required: true, message: "Password required" }]}
+                    >
+                      <Input.Password autoComplete="current-password" />
+                    </Form.Item>
+                  </>
+                );
+              }
+              return (
+                <>
                   <Form.Item
                     name="username"
                     label="Username"
                     rules={[{ required: true, message: "Username required" }]}
                   >
-                    <Input />
+                    <Input autoComplete="username" />
                   </Form.Item>
-                );
-              }
-              return (
-                <Form.Item
-                  name="email"
-                  label="Email"
-                  rules={[
-                    {
-                      type: "email",
-                      required: true,
-                      message: "Email required",
-                    },
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-              );
-            }}
-          </Form.Item>
-          <Form.Item shouldUpdate>
-            {() => {
-              const role = form.getFieldValue("role");
-              return role === "employee" ? (
-                <Form.Item
-                  name="password"
-                  label="Password"
-                  rules={[{ required: true, message: "Password required" }]}
-                >
-                  <Input.Password />
-                </Form.Item>
-              ) : (
-                <Form.Item
-                  name="phone"
-                  label="Phone"
-                  rules={[
-                    { required: true, message: "Phone required" },
-                    {
-                      pattern: /^1[3-9]\d{9}$/,
-                      message: "Invalid phone number",
-                    },
-                  ]}
-                >
-                  <Input maxLength={11} />
-                </Form.Item>
+                  <Form.Item
+                    name="email"
+                    label="Email"
+                    rules={[{ type: "email", message: "Invalid email" }]}
+                  >
+                    <Input autoComplete="email" />
+                  </Form.Item>
+                  <Form.Item
+                    name="phone"
+                    label="Phone"
+                    rules={[
+                      { pattern: /^[0-9\-+]{6,20}$/, message: "Invalid phone" },
+                    ]}
+                  >
+                    <Input autoComplete="tel" />
+                  </Form.Item>
+                  <Form.Item shouldUpdate noStyle>
+                    {() => {
+                      // show helper only when both contact fields empty
+                      const email = form.getFieldValue("email");
+                      const phone = form.getFieldValue("phone");
+                      return !email && !phone ? (
+                        <div
+                          style={{
+                            color: "#faad14",
+                            fontSize: 12,
+                            marginBottom: 12,
+                          }}
+                        >
+                          Provide Email 或 Phone 其一
+                        </div>
+                      ) : null;
+                    }}
+                  </Form.Item>
+                </>
               );
             }}
           </Form.Item>
@@ -127,9 +131,16 @@ export default function LoginPage() {
           </Button>
         </Form>
         <Typography.Paragraph style={{ marginTop: 16 }}>
-          Employee? <a href="/register">Register</a>
+          No account? <a href="/register">Register</a>
         </Typography.Paragraph>
       </Card>
     </div>
   );
+}
+
+interface IntrospectInfo {
+  active: boolean;
+  sub?: string;
+  role?: UserRole;
+  username?: string;
 }

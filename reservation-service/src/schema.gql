@@ -36,9 +36,6 @@ type Mutation {
 }
 
 input CreateReservationInput {
-  guestName: String!
-  contactPhone: String!
-  contactEmail: String
   expectedArrival: String!
   tableSize: Int!
 }

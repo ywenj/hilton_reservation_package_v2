@@ -12,4 +12,6 @@ export interface IntrospectResponseDto {
   username?: string;
   exp?: number;
   iat?: number;
+  email?: string;
+  phone?: string;
 }

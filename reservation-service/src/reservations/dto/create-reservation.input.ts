@@ -10,20 +10,20 @@ import {
 
 @InputType()
 export class CreateReservationInput {
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  guestName!: string;
+  // @Field()
+  // @IsNotEmpty()
+  // @IsString()
+  // guestName!: string;
 
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  contactPhone!: string;
+  // @Field()
+  // @IsNotEmpty()
+  // @IsString()
+  // contactPhone!: string;
 
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  contactEmail?: string;
+  // @Field({ nullable: true })
+  // @IsOptional()
+  // @IsString()
+  // contactEmail?: string;
 
   @Field()
   @IsNotEmpty()

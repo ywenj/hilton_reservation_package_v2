@@ -39,7 +39,12 @@ export class ReservationsResolver {
     @Args("input") input: CreateReservationInput,
     @CurrentUser() user: JwtUser
   ) {
-    return this.reservationsService.create({ ...input, userId: user.sub });
+    return this.reservationsService.create({
+      ...input,
+      userId: user.sub,
+      contactEmail: user.email,
+      contactPhone: user.phone,
+    });
   }
 
   @Mutation(() => Reservation)

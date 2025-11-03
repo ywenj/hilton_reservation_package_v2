@@ -1,10 +1,12 @@
-// Auth API client wrappers
-// Assumes environment variables: VITE_AUTH_BASE_URL
-// Endpoints: POST /auth/login { email, password } => { token, user }
-//            POST /auth/register { name, email, password } => { token, user }
-//            POST /auth/introspect { token } => { active, sub, role, exp }
+// Auth API client wrappers for role-specific endpoints
+// VITE_AUTH_BASE_URL required
+// Endpoints:
+//  POST /auth/register/employee { username, password }
+//  POST /auth/login/employee { username, password }
+//  POST /auth/register/guest { username, email?, phone? }
+//  POST /auth/login/guest { email?, phone? }
+//  POST /auth/introspect { token }
 
-// Backend /auth/login returns { access_token }
 export interface LoginResponse {
   access_token: string;
 }
@@ -24,24 +26,41 @@ async function postJson<T>(path: string, body: any): Promise<T> {
   return res.json();
 }
 
-export async function loginAuth(
+export async function loginEmployee(
   username: string,
   password: string
 ): Promise<LoginResponse> {
-  return postJson<LoginResponse>("/auth/login", { username, password });
+  return postJson<LoginResponse>("/auth/login/employee", {
+    username,
+    password,
+  });
 }
 
-export async function registerEmployee(
-  username: string,
-  password: string
-): Promise<{ id: string; username: string; role: string }> {
+export async function loginGuest(
+  email?: string,
+  phone?: string
+): Promise<LoginResponse> {
+  return postJson<LoginResponse>("/auth/login/guest", { email, phone });
+}
+
+export async function registerGuest(data: {
+  username: string;
+  email?: string;
+  phone?: string;
+}) {
+  return postJson<{
+    id: string;
+    role: string;
+    email?: string;
+    phone?: string;
+    username: string;
+  }>("/auth/register/guest", data);
+}
+
+export async function registerEmployeeNew(username: string, password: string) {
   return postJson<{ id: string; username: string; role: string }>(
-    "/auth/register",
-    {
-      username,
-      password,
-      role: "employee",
-    }
+    "/auth/register/employee",
+    { username, password }
   );
 }
 

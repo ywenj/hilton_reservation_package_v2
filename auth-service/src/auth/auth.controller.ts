@@ -34,6 +34,7 @@ export class AuthController {
   // Guest registration (email + phone 至少一个; 可选 username)
   @Post("register/guest")
   async registerGuest(@Body() body: RegisterGuestDto) {
+    console.log(`registerGuest-body: ${JSON.stringify(body)}`);
     if (!body.email && !body.phone) {
       throw new BadRequestException("Email or phone required");
     }
