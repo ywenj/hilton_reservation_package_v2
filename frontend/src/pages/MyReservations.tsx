@@ -1,29 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { useMutation, useQuery } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
+import dayjs from "dayjs";
 import {
   Table,
-  Tag,
-  Typography,
-  Button,
   Space,
   InputNumber,
   Form,
   Modal,
   DatePicker,
+  Typography,
+  message,
 } from "antd";
+import { formatDateTime } from "../utils/datetime";
 import {
-  MUTATION_CREATE,
   QUERY_MY_RESERVATIONS,
+  MUTATION_CREATE,
   MUTATION_UPDATE,
   MUTATION_CANCEL_MY,
 } from "../graphql/queries";
-import { useNavigate } from "react-router-dom";
-import dayjs from "dayjs";
-import { message } from "antd";
+import { ActionButton } from "../components/ActionButton";
 
-export default function MyReservationsPage() {
+function MyReservations() {
   const { data, loading, refetch } = useQuery(QUERY_MY_RESERVATIONS);
-  const navigate = useNavigate();
+
   const [openCreate, setOpenCreate] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -47,6 +46,15 @@ export default function MyReservationsPage() {
     }
   }, [editing, openEdit, formEdit]);
 
+  const ensureNow = (formRef: any, field: string) => {
+    const v = formRef.getFieldValue(field);
+    if (!v) {
+      formRef.setFieldsValue({ [field]: dayjs() });
+    }
+  };
+
+  const FINAL_STATUSES = ["Cancelled", "Completed"];
+
   return (
     <div style={{ padding: 24 }}>
       <Space
@@ -60,10 +68,15 @@ export default function MyReservationsPage() {
           My Reservations
         </Typography.Title>
         <>
-          <Button type="primary" onClick={() => setOpenCreate(true)}>
+          <ActionButton
+            onClick={() => {
+              formCreate.resetFields();
+              ensureNow(formCreate, "expectedArrival");
+              setOpenCreate(true);
+            }}
+          >
             New Reservation
-          </Button>
-          {/* Create Modal */}
+          </ActionButton>
           <Modal
             open={openCreate}
             title="Create Reservation"
@@ -115,6 +128,10 @@ export default function MyReservationsPage() {
                   showTime
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: "100%" }}
+                  onFocus={() => ensureNow(formCreate, "expectedArrival")}
+                  onOpenChange={(open) => {
+                    if (open) ensureNow(formCreate, "expectedArrival");
+                  }}
                 />
               </Form.Item>
               <Form.Item
@@ -128,7 +145,6 @@ export default function MyReservationsPage() {
             </Form>
           </Modal>
 
-          {/* Edit Modal */}
           <Modal
             open={openEdit}
             title="Edit Reservation"
@@ -183,6 +199,10 @@ export default function MyReservationsPage() {
                   showTime
                   format="YYYY-MM-DD HH:mm"
                   style={{ width: "100%" }}
+                  onFocus={() => ensureNow(formEdit, "expectedArrival")}
+                  onOpenChange={(open) => {
+                    if (open) ensureNow(formEdit, "expectedArrival");
+                  }}
                 />
               </Form.Item>
               <Form.Item
@@ -201,21 +221,24 @@ export default function MyReservationsPage() {
         dataSource={(data?.myReservations || []) as any[]}
         rowKey={(r: any) => r._id}
         columns={[
-          { title: "Arrival", dataIndex: "expectedArrival" },
+          {
+            title: "Arrival",
+            dataIndex: "expectedArrival",
+            render: (v: string) => formatDateTime(v),
+          },
           { title: "Table Size", dataIndex: "tableSize" },
           {
             title: "Status",
             dataIndex: "status",
-            render: (s: string) => <Tag>{s}</Tag>,
+            render: (s: string) => <span>{s}</span>,
           },
           {
             title: "Actions",
             render: (_: any, r: any) => {
-              const disabled = ["Cancelled", "Completed"].includes(r.status);
+              const disabled = FINAL_STATUSES.includes(r.status);
               return (
                 <Space size="small">
-                  <Button
-                    size="small"
+                  <ActionButton
                     disabled={disabled}
                     onClick={() => {
                       setEditing(r);
@@ -223,9 +246,8 @@ export default function MyReservationsPage() {
                     }}
                   >
                     Edit
-                  </Button>
-                  <Button
-                    size="small"
+                  </ActionButton>
+                  <ActionButton
                     danger
                     loading={cancelling}
                     disabled={disabled}
@@ -240,7 +262,7 @@ export default function MyReservationsPage() {
                     }}
                   >
                     Cancel
-                  </Button>
+                  </ActionButton>
                 </Space>
               );
             },
@@ -250,3 +272,5 @@ export default function MyReservationsPage() {
     </div>
   );
 }
+
+export default MyReservations;

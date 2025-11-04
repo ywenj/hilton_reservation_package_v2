@@ -164,7 +164,7 @@ export const AppLayout: React.FC = () => {
           </Content>
           {!hideChrome && (
             <Footer style={{ textAlign: "center" }}>
-              Hilton Reservation Demo ©2024
+              Hilton Reservation Demo ©2025
             </Footer>
           )}
         </Layout>

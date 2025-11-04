@@ -18,11 +18,12 @@ import {
   Descriptions,
   Spin,
 } from "antd";
+import { ActionButton } from "../components/ActionButton";
 import dayjs from "dayjs";
+import { formatDateTime } from "../utils/datetime";
 
 const STATUS_OPTIONS = ["Approve", "Complete", "Cancel"];
 
-// Mapping from stored / mutation status keywords to display labels (past tense)
 const STATUS_DISPLAY: Record<string, string> = {
   Request: "Requested",
   Approve: "Approved",
@@ -96,7 +97,11 @@ export default function AdminReservationsPage() {
         columns={[
           { title: "Guest Name", dataIndex: "guestName" },
           { title: "Phone", dataIndex: "contactPhone" },
-          { title: "Arrival", dataIndex: "expectedArrival" },
+          {
+            title: "Arrival",
+            dataIndex: "expectedArrival",
+            render: (v: string) => formatDateTime(v),
+          },
           { title: "Party Size", dataIndex: "tableSize" },
           {
             title: "Status",
@@ -107,32 +112,25 @@ export default function AdminReservationsPage() {
             title: "Actions",
             render: (_: any, r: any) => (
               <Space>
-                <Button
-                  size="small"
-                  onClick={() => openDetail(r._id)}
-                  style={{
-                    background: "#1677ff",
-                    color: "#fff",
-                    borderColor: "#1677ff",
-                  }}
-                >
+                <ActionButton onClick={() => openDetail(r._id)}>
                   View
-                </Button>
-                {STATUS_OPTIONS.filter((ns) => ns !== r.status).map((ns) => (
-                  <Button
-                    size="small"
-                    loading={updating}
-                    key={ns}
-                    onClick={() => onStatusChange(r._id, STATUS_DISPLAY[ns])}
-                    style={{
-                      background: "#1677ff",
-                      color: "#fff",
-                      borderColor: "#1677ff",
-                    }}
-                  >
-                    {ns}
-                  </Button>
-                ))}
+                </ActionButton>
+                {STATUS_OPTIONS.filter((ns) => ns !== r.status).map((ns) => {
+                  const disabledFinal =
+                    ["Cancelled", "Completed"].includes(
+                      STATUS_DISPLAY[r.status] ?? r.status
+                    ) || ["Cancelled", "Completed"].includes(r.status);
+                  return (
+                    <ActionButton
+                      loading={updating}
+                      key={ns}
+                      disabled={disabledFinal}
+                      onClick={() => onStatusChange(r._id, STATUS_DISPLAY[ns])}
+                    >
+                      {ns}
+                    </ActionButton>
+                  );
+                })}
               </Space>
             ),
           },
@@ -172,7 +170,7 @@ export default function AdminReservationsPage() {
               </Descriptions.Item>
             )}
             <Descriptions.Item label="Expected Arrival">
-              {detailData.reservation.expectedArrival}
+              {formatDateTime(detailData.reservation.expectedArrival)}
             </Descriptions.Item>
             <Descriptions.Item label="Table Size">
               {detailData.reservation.tableSize}
