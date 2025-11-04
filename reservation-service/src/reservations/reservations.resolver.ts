@@ -3,10 +3,16 @@ import { ReservationsService } from "./reservations.service";
 import { Reservation } from "./schemas/reservation.schema";
 import { CreateReservationInput } from "./dto/create-reservation.input";
 import { UpdateReservationInput } from "./dto/update-reservation.input";
-import { UsePipes, ValidationPipe, UseGuards } from "@nestjs/common";
+import {
+  UsePipes,
+  ValidationPipe,
+  UseGuards,
+  NotFoundException,
+} from "@nestjs/common";
 import { CurrentUser } from "../common/auth/current-user.decorator";
 import { GqlAuthGuard, RequireRoles } from "../common/auth/gql-auth.guard";
 import { JwtUser, UserRole } from "../common/auth/roles";
+import { ReservationStatus } from "./schemas/reservation.schema";
 
 @Resolver(() => Reservation)
 export class ReservationsResolver {
@@ -28,8 +34,12 @@ export class ReservationsResolver {
   }
 
   @Query(() => Reservation, { nullable: true })
-  async reservation(@Args("id") id: string) {
-    return this.reservationsService.findById(id);
+  @UseGuards(new GqlAuthGuard({ roles: [UserRole.Guest, UserRole.Employee] }))
+  async reservation(@Args("id") id: string, @CurrentUser() user: JwtUser) {
+    const r = await this.reservationsService.findById(id);
+    if (!r) return null;
+    if (user.role === UserRole.Employee || r.userId === user.sub) return r;
+    return null; // hide others' reservations from guests
   }
 
   @Mutation(() => Reservation)
@@ -65,5 +75,24 @@ export class ReservationsResolver {
     @Args("status") status: string
   ) {
     return this.reservationsService.setStatus(id, status as any);
+  }
+
+  @Mutation(() => Reservation)
+  @UseGuards(new GqlAuthGuard({ roles: [UserRole.Guest] }))
+  async cancelMyReservation(
+    @Args("id") id: string,
+    @CurrentUser() user: JwtUser
+  ) {
+    const r = await this.reservationsService.findById(id);
+    if (!r || r.userId !== user.sub) {
+      throw new NotFoundException("Reservation not found");
+    }
+    if (
+      r.status === ReservationStatus.Cancelled ||
+      r.status === ReservationStatus.Completed
+    ) {
+      return r; // no-op
+    }
+    return this.reservationsService.setStatus(id, ReservationStatus.Cancelled);
   }
 }

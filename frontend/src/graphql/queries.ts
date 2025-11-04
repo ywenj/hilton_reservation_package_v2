@@ -72,3 +72,12 @@ export const MUTATION_SET_STATUS = gql`
     }
   }
 `;
+
+export const MUTATION_CANCEL_MY = gql`
+  mutation CancelMyReservation($id: String!) {
+    cancelMyReservation(id: $id) {
+      _id
+      status
+    }
+  }
+`;

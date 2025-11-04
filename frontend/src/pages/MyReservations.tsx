@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import {
   Table,
@@ -11,7 +11,12 @@ import {
   Modal,
   DatePicker,
 } from "antd";
-import { MUTATION_CREATE, QUERY_MY_RESERVATIONS } from "../graphql/queries";
+import {
+  MUTATION_CREATE,
+  QUERY_MY_RESERVATIONS,
+  MUTATION_UPDATE,
+  MUTATION_CANCEL_MY,
+} from "../graphql/queries";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { message } from "antd";
@@ -19,10 +24,28 @@ import { message } from "antd";
 export default function MyReservationsPage() {
   const { data, loading, refetch } = useQuery(QUERY_MY_RESERVATIONS);
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [openCreate, setOpenCreate] = useState(false);
+  const [openEdit, setOpenEdit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form] = Form.useForm();
+  const [formCreate] = Form.useForm();
+  const [formEdit] = Form.useForm();
   const [createReservation] = useMutation(MUTATION_CREATE);
+  const [updateReservation, { loading: updating }] =
+    useMutation(MUTATION_UPDATE);
+  const [cancelMyReservation, { loading: cancelling }] =
+    useMutation(MUTATION_CANCEL_MY);
+  const [editing, setEditing] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (editing && openEdit) {
+      formEdit.setFieldsValue({
+        expectedArrival: dayjs(editing.expectedArrival),
+        tableSize: editing.tableSize,
+      });
+    } else {
+      formEdit.resetFields();
+    }
+  }, [editing, openEdit, formEdit]);
 
   return (
     <div style={{ padding: 24 }}>
@@ -37,20 +60,21 @@ export default function MyReservationsPage() {
           My Reservations
         </Typography.Title>
         <>
-          <Button type="primary" onClick={() => setOpen(true)}>
+          <Button type="primary" onClick={() => setOpenCreate(true)}>
             New Reservation
           </Button>
+          {/* Create Modal */}
           <Modal
-            open={open}
+            open={openCreate}
             title="Create Reservation"
             onCancel={() => {
-              form.resetFields();
-              setOpen(false);
+              formCreate.resetFields();
+              setOpenCreate(false);
             }}
             onOk={async () => {
               try {
                 setSubmitting(true);
-                const values = await form.validateFields();
+                const values = await formCreate.validateFields();
                 const input = {
                   expectedArrival:
                     values.expectedArrival.format("YYYY-MM-DD HH:mm"),
@@ -59,8 +83,8 @@ export default function MyReservationsPage() {
                 await createReservation({ variables: { input } });
                 await refetch();
                 message.success("Reservation created");
-                setOpen(false);
-                form.resetFields();
+                setOpenCreate(false);
+                formCreate.resetFields();
               } catch (e: any) {
                 message.error(e.message || "Create failed");
               } finally {
@@ -70,7 +94,7 @@ export default function MyReservationsPage() {
             confirmLoading={submitting}
             destroyOnClose
           >
-            <Form form={form} layout="vertical">
+            <Form form={formCreate} layout="vertical">
               <Form.Item
                 name="expectedArrival"
                 label="Expected Arrival"
@@ -103,6 +127,73 @@ export default function MyReservationsPage() {
               </Form.Item>
             </Form>
           </Modal>
+
+          {/* Edit Modal */}
+          <Modal
+            open={openEdit}
+            title="Edit Reservation"
+            onCancel={() => {
+              setOpenEdit(false);
+              setEditing(null);
+              formEdit.resetFields();
+            }}
+            onOk={async () => {
+              if (!editing) return;
+              try {
+                const values = await formEdit.validateFields();
+                await updateReservation({
+                  variables: {
+                    id: editing._id,
+                    input: {
+                      expectedArrival:
+                        values.expectedArrival.format("YYYY-MM-DD HH:mm"),
+                      tableSize: values.tableSize,
+                    },
+                  },
+                });
+                await refetch();
+                message.success("Reservation updated");
+                setOpenEdit(false);
+                setEditing(null);
+              } catch (e: any) {
+                message.error(e.message || "Update failed");
+              }
+            }}
+            confirmLoading={updating}
+            destroyOnClose
+          >
+            <Form form={formEdit} layout="vertical">
+              <Form.Item
+                name="expectedArrival"
+                label="Expected Arrival"
+                rules={[
+                  { required: true, message: "Please select arrival time" },
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      if (value.isBefore(dayjs())) {
+                        return Promise.reject("Time must be in the future");
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <DatePicker
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
+                  style={{ width: "100%" }}
+                />
+              </Form.Item>
+              <Form.Item
+                name="tableSize"
+                label="Table Size"
+                rules={[{ required: true, message: "Please enter table size" }]}
+              >
+                <InputNumber min={1} style={{ width: "100%" }} />
+              </Form.Item>
+            </Form>
+          </Modal>
         </>
       </Space>
       <Table
@@ -116,6 +207,43 @@ export default function MyReservationsPage() {
             title: "Status",
             dataIndex: "status",
             render: (s: string) => <Tag>{s}</Tag>,
+          },
+          {
+            title: "Actions",
+            render: (_: any, r: any) => {
+              const disabled = ["Cancelled", "Completed"].includes(r.status);
+              return (
+                <Space size="small">
+                  <Button
+                    size="small"
+                    disabled={disabled}
+                    onClick={() => {
+                      setEditing(r);
+                      setOpenEdit(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    size="small"
+                    danger
+                    loading={cancelling}
+                    disabled={disabled}
+                    onClick={async () => {
+                      try {
+                        await cancelMyReservation({ variables: { id: r._id } });
+                        await refetch();
+                        message.success("Cancelled");
+                      } catch (e: any) {
+                        message.error(e.message || "Cancel failed");
+                      }
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Space>
+              );
+            },
           },
         ]}
       />

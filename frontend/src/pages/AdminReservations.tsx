@@ -1,6 +1,10 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "@apollo/client";
-import { QUERY_RESERVATIONS, MUTATION_SET_STATUS } from "../graphql/queries";
+import { useQuery, useMutation, useLazyQuery } from "@apollo/client";
+import {
+  QUERY_RESERVATIONS,
+  MUTATION_SET_STATUS,
+  QUERY_RESERVATION,
+} from "../graphql/queries";
 import {
   DatePicker,
   Select,
@@ -10,6 +14,9 @@ import {
   Space,
   Typography,
   message,
+  Modal,
+  Descriptions,
+  Spin,
 } from "antd";
 import dayjs from "dayjs";
 
@@ -31,6 +38,12 @@ export default function AdminReservationsPage() {
   });
   const [setStatusMutation, { loading: updating }] =
     useMutation(MUTATION_SET_STATUS);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [
+    fetchReservation,
+    { data: detailData, loading: detailLoading, error: detailError },
+  ] = useLazyQuery(QUERY_RESERVATION);
 
   const onStatusChange = async (id: string, newStatus: string) => {
     try {
@@ -40,6 +53,17 @@ export default function AdminReservationsPage() {
     } catch (e: any) {
       message.error(e.message);
     }
+  };
+
+  const openDetail = (id: string) => {
+    setCurrentId(id);
+    setDetailOpen(true);
+    fetchReservation({ variables: { id } });
+  };
+
+  const closeDetail = () => {
+    setDetailOpen(false);
+    setCurrentId(null);
   };
 
   return (
@@ -83,6 +107,17 @@ export default function AdminReservationsPage() {
             title: "Actions",
             render: (_: any, r: any) => (
               <Space>
+                <Button
+                  size="small"
+                  onClick={() => openDetail(r._id)}
+                  style={{
+                    background: "#1677ff",
+                    color: "#fff",
+                    borderColor: "#1677ff",
+                  }}
+                >
+                  View
+                </Button>
                 {STATUS_OPTIONS.filter((ns) => ns !== r.status).map((ns) => (
                   <Button
                     size="small"
@@ -103,6 +138,51 @@ export default function AdminReservationsPage() {
           },
         ]}
       />
+      <Modal
+        open={detailOpen}
+        onCancel={closeDetail}
+        title="Reservation Detail"
+        footer={null}
+        destroyOnClose
+      >
+        {detailLoading && (
+          <div style={{ textAlign: "center", padding: 24 }}>
+            <Spin />
+          </div>
+        )}
+        {!detailLoading && detailError && (
+          <Typography.Text type="danger">{detailError.message}</Typography.Text>
+        )}
+        {!detailLoading && !detailError && detailData?.reservation && (
+          <Descriptions
+            bordered
+            size="small"
+            column={1}
+            labelStyle={{ width: 160 }}
+          >
+            <Descriptions.Item label="Guest Name">
+              {detailData.reservation.guestName}
+            </Descriptions.Item>
+            <Descriptions.Item label="Contact Phone">
+              {detailData.reservation.contactPhone}
+            </Descriptions.Item>
+            {detailData.reservation.contactEmail && (
+              <Descriptions.Item label="Contact Email">
+                {detailData.reservation.contactEmail}
+              </Descriptions.Item>
+            )}
+            <Descriptions.Item label="Expected Arrival">
+              {detailData.reservation.expectedArrival}
+            </Descriptions.Item>
+            <Descriptions.Item label="Table Size">
+              {detailData.reservation.tableSize}
+            </Descriptions.Item>
+            <Descriptions.Item label="Status">
+              {detailData.reservation.status}
+            </Descriptions.Item>
+          </Descriptions>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -32,6 +32,7 @@ type Mutation {
   createReservation(input: CreateReservationInput!): Reservation!
   updateReservation(id: String!, input: UpdateReservationInput!): Reservation!
   setReservationStatus(id: String!, status: String!): Reservation!
+  cancelMyReservation(id: String!): Reservation!
 }
 
 input CreateReservationInput {

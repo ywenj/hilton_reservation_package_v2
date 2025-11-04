@@ -41,6 +41,14 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/reservation/:id"
+                element={
+                  <ProtectedRoute roles={["guest", "employee"]}>
+                    <ReservationView />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
           </Routes>
         </BrowserRouter>
