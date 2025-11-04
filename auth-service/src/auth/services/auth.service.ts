@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from "@nestjs/common";
+import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { User, UserDocument } from "../schemas/user.schema";
@@ -12,12 +12,23 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
+  private readonly logger = new Logger(AuthService.name);
+
   async register(username: string, password: string, role: string = "guest") {
+    this.logger.debug(`Register attempt username=${username} role=${role}`);
     const exists = await this.userModel.findOne({ username });
-    if (exists) throw new BadRequestException("User exists");
+    if (exists) {
+      this.logger.warn(
+        `Register failed: username already exists (${username})`
+      );
+      throw new BadRequestException("User exists");
+    }
     const hashed = await bcrypt.hash(password, 10);
     const created = new this.userModel({ username, password: hashed, role });
     await created.save();
+    this.logger.log(
+      `Register success id=${created._id} username=${created.username}`
+    );
     return { id: created._id, username: created.username, role: created.role };
   }
 
@@ -25,19 +36,30 @@ export class AuthService {
     const user = await this.userModel.findOne({ username });
     if (!user) return null;
     const match = await bcrypt.compare(pass, user.password ?? "");
-    if (match) return user;
+    if (match) {
+      this.logger.debug(`Password match for username=${username}`);
+      return user;
+    }
+    this.logger.debug(`Password mismatch for username=${username}`);
     return null;
   }
 
   async login(user: UserDocument) {
     const payload = { username: user.username, sub: user._id, role: user.role };
+    this.logger.log(`Issuing token for sub=${user._id} role=${user.role}`);
     return { access_token: this.jwtService.sign(payload) };
   }
 
   async registerEmployee(username: string, password: string) {
     try {
+      this.logger.debug(`Employee register attempt username=${username}`);
       const exists = await this.userModel.findOne({ username });
-      if (exists) throw new BadRequestException("User exists");
+      if (exists) {
+        this.logger.warn(
+          `Employee register failed: exists username=${username}`
+        );
+        throw new BadRequestException("User exists");
+      }
       const hashed = await bcrypt.hash(password, 10);
       const created = new this.userModel({
         username,
@@ -45,6 +67,7 @@ export class AuthService {
         role: "employee",
       });
       await created.save();
+      this.logger.log(`Employee register success id=${created._id}`);
       return {
         id: created._id.toString(),
         username: created.username,
@@ -52,8 +75,15 @@ export class AuthService {
       };
     } catch (err: any) {
       if (err?.code === 11000) {
+        this.logger.warn(
+          `Employee register duplicate key username=${username}`
+        );
         throw new BadRequestException("Duplicate key");
       }
+      this.logger.error(
+        `Employee register error username=${username}`,
+        err?.stack
+      );
       throw err;
     }
   }
@@ -70,6 +100,9 @@ export class AuthService {
       throw new BadRequestException("Email or phone is required");
     }
     try {
+      this.logger.debug(
+        `Guest register attempt username=${data.username} email=${data.email} phone=${data.phone}`
+      );
       const u = await this.userModel.findOne({ username: data.username });
       if (u) throw new BadRequestException("Username exists");
       if (data.email) {
@@ -89,6 +122,7 @@ export class AuthService {
         role: "guest",
       });
       await created.save();
+      this.logger.log(`Guest register success id=${created._id}`);
       return {
         id: created._id.toString(),
         role: created.role,
@@ -98,8 +132,15 @@ export class AuthService {
       };
     } catch (err: any) {
       if (err?.code === 11000) {
+        this.logger.warn(
+          `Guest register duplicate key username=${data.username}`
+        );
         throw new BadRequestException("Duplicate key");
       }
+      this.logger.error(
+        `Guest register error username=${data.username}`,
+        err?.stack
+      );
       throw err;
     }
   }
@@ -109,6 +150,7 @@ export class AuthService {
     if (!user) return null;
     const match = await bcrypt.compare(pass, user.password || "");
     if (!match) return null;
+    this.logger.log(`Employee login success username=${username}`);
     return this.issueToken(user);
   }
 
@@ -119,6 +161,7 @@ export class AuthService {
     if (phone) criteria.phone = phone;
     const user = await this.userModel.findOne(criteria);
     if (!user) return null;
+    this.logger.log(`Guest login success email=${email} phone=${phone}`);
     return this.issueToken(user);
   }
 
@@ -128,6 +171,7 @@ export class AuthService {
       role: user.role,
       username: user.username,
     };
+    this.logger.debug(`Issue JWT for sub=${payload.sub} role=${payload.role}`);
     return { access_token: this.jwtService.sign(payload) };
   }
 }

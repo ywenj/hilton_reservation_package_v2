@@ -20,6 +20,12 @@ describe("AuthService", () => {
       ],
     }).compile();
     service = module.get<AuthService>(AuthService);
+    if ((service as any).logger) {
+      jest.spyOn((service as any).logger, "log");
+      jest.spyOn((service as any).logger, "warn");
+      jest.spyOn((service as any).logger, "debug");
+      jest.spyOn((service as any).logger, "error");
+    }
   });
 
   it("registerEmployee rejects duplicate username", async () => {
@@ -27,5 +33,9 @@ describe("AuthService", () => {
     await expect(
       service.registerEmployee("emp", "password123")
     ).rejects.toThrow();
+    if ((service as any).logger) {
+      expect((service as any).logger.debug).toHaveBeenCalled();
+      expect((service as any).logger.warn).toHaveBeenCalled();
+    }
   });
 });

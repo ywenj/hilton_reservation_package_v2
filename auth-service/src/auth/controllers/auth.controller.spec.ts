@@ -24,6 +24,12 @@ describe("AuthController", () => {
     }).compile();
     controller = moduleRef.get(AuthController);
     jest.clearAllMocks();
+    // Spy logger if exists
+    if ((controller as any).logger) {
+      jest.spyOn((controller as any).logger, "log");
+      jest.spyOn((controller as any).logger, "debug");
+      jest.spyOn((controller as any).logger, "warn");
+    }
   });
 
   it("registerEmployee delegates to service", async () => {
@@ -34,6 +40,9 @@ describe("AuthController", () => {
     } as any);
     expect(res).toEqual({ id: "1" });
     expect(authServiceMock.registerEmployee).toHaveBeenCalledWith("u", "p");
+    if ((controller as any).logger) {
+      expect((controller as any).logger.log).toHaveBeenCalled();
+    }
   });
 
   it("registerGuest throws when both email and phone missing", async () => {
@@ -73,6 +82,9 @@ describe("AuthController", () => {
       password: "good",
     } as any);
     expect(res).toEqual({ access_token: "abc" });
+    if ((controller as any).logger) {
+      expect((controller as any).logger.log).toHaveBeenCalled();
+    }
   });
 
   it("loginGuest returns error object when neither email nor phone matches", async () => {
@@ -87,6 +99,9 @@ describe("AuthController", () => {
     });
     const res = await controller.loginGuest({ email: "y@y.com" } as any);
     expect(res).toEqual({ access_token: "guest-token" });
+    if ((controller as any).logger) {
+      expect((controller as any).logger.log).toHaveBeenCalled();
+    }
   });
 
   it("introspect delegates to introspectionService", async () => {
@@ -97,5 +112,8 @@ describe("AuthController", () => {
     const res = await controller.introspect({ token: "tok" } as any);
     expect(res).toEqual({ active: true, sub: "u1" });
     expect(introspectionServiceMock.introspect).toHaveBeenCalledWith("tok");
+    if ((controller as any).logger) {
+      expect((controller as any).logger.debug).toHaveBeenCalled();
+    }
   });
 });

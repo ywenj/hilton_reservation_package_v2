@@ -23,7 +23,10 @@ describe("IntrospectionService", () => {
     }).compile();
     service = module.get(IntrospectionService);
     jwt = module.get(JwtService);
-    jest.spyOn(console, "error").mockImplementation(() => {});
+    if ((service as any).logger) {
+      jest.spyOn((service as any).logger, "debug");
+      jest.spyOn((service as any).logger, "warn");
+    }
   });
 
   beforeEach(() => {
@@ -69,5 +72,8 @@ describe("IntrospectionService", () => {
   it("returns inactive for malformed token", async () => {
     const res = await service.introspect("not-a-token");
     expect(res.active).toBe(false);
+    if ((service as any).logger) {
+      expect((service as any).logger.warn).toHaveBeenCalled();
+    }
   });
 });
