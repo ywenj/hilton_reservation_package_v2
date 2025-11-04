@@ -1,13 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { getModelToken } from '@nestjs/mongoose';
-import { ReservationsService } from '../src/reservations/reservations.service';
-import { Reservation, ReservationSchema, ReservationStatus } from '../src/reservations/schemas/reservation.schema';
+import { Test, TestingModule } from "@nestjs/testing";
+import { getModelToken } from "@nestjs/mongoose";
+import { ReservationsService } from "../src/reservations/services/reservations.service";
+import {
+  Reservation,
+  ReservationSchema,
+  ReservationStatus,
+} from "../src/reservations/schemas/reservation.schema";
 
 const mockReservation = (overrides = {}) => ({
-  _id: 'mock-id',
-  guestName: 'Alice',
-  contactPhone: '123',
-  contactEmail: 'a@example.com',
+  _id: "mock-id",
+  guestName: "Alice",
+  contactPhone: "123",
+  contactEmail: "a@example.com",
   expectedArrival: new Date().toISOString(),
   tableSize: 2,
   status: ReservationStatus.Requested,
@@ -15,7 +19,7 @@ const mockReservation = (overrides = {}) => ({
   ...overrides,
 });
 
-describe('ReservationsService (unit)', () => {
+describe("ReservationsService (unit)", () => {
   let service: ReservationsService;
   let model: any;
 
@@ -36,14 +40,14 @@ describe('ReservationsService (unit)', () => {
     service = module.get<ReservationsService>(ReservationsService);
   });
 
-  it('service should be defined', () => {
+  it("service should be defined", () => {
     expect(service).toBeDefined();
   });
 
-  it('create should call model constructor and save', async () => {
+  it("create should call model constructor and save", async () => {
     const dto = {
-      guestName: 'Bob',
-      contactPhone: '321',
+      guestName: "Bob",
+      contactPhone: "321",
       expectedArrival: new Date().toISOString(),
       tableSize: 4,
     };
@@ -58,18 +62,27 @@ describe('ReservationsService (unit)', () => {
     expect(model.create).toHaveBeenCalled();
   });
 
-  it('findById should return reservation when found', async () => {
+  it("findById should return reservation when found", async () => {
     const found = mockReservation();
-    model.findById.mockReturnValue({ exec: jest.fn().mockResolvedValue(found) });
-    const r = await service.findById('mock-id');
-    expect(model.findById).toHaveBeenCalledWith('mock-id');
+    model.findById.mockReturnValue({
+      exec: jest.fn().mockResolvedValue(found),
+    });
+    const r = await service.findById("mock-id");
+    expect(model.findById).toHaveBeenCalledWith("mock-id");
     expect(r).toEqual(found);
   });
 
-  it('query should pass filters correctly', async () => {
+  it("query should pass filters correctly", async () => {
     const list = [mockReservation()];
-    model.find.mockReturnValue({ sort: jest.fn().mockReturnValue({ exec: jest.fn().mockResolvedValue(list) }) });
-    const res = await service.query({ date: new Date().toISOString().split('T')[0], status: ReservationStatus.Requested });
+    model.find.mockReturnValue({
+      sort: jest
+        .fn()
+        .mockReturnValue({ exec: jest.fn().mockResolvedValue(list) }),
+    });
+    const res = await service.query({
+      date: new Date().toISOString().split("T")[0],
+      status: ReservationStatus.Requested,
+    });
     expect(model.find).toHaveBeenCalled();
     expect(res).toEqual(list);
   });

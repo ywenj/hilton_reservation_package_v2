@@ -51,11 +51,15 @@ describe("GraphQL context introspection", () => {
               const { IntrospectionClient } = await import(
                 "../src/common/auth/introspection.client"
               );
-              const client = new IntrospectionClient(
-                process.env.AUTH_INTROSPECTION_URL!,
-                1000,
-                fetchMock as any
-              );
+              // 使用 cache-manager 注入方式：构造时需要模拟 cache
+              const cacheMock: any = {
+                get: jest.fn(async () => undefined),
+                set: jest.fn(async () => undefined),
+              };
+              const client = new IntrospectionClient(cacheMock);
+              client.url = process.env.AUTH_INTROSPECTION_URL!;
+              client.ttlMs = 1000;
+              client.fetchImpl = fetchMock as any;
               const r = await client.introspect(token);
               if (r.active) user = { sub: r.sub, role: r.role };
             }
@@ -71,6 +75,13 @@ describe("GraphQL context introspection", () => {
 
   afterAll(async () => {
     await app.close();
+    jest.clearAllTimers();
+    try {
+      const mongoose = require("mongoose");
+      if (mongoose.connection && mongoose.connection.readyState !== 0) {
+        await mongoose.disconnect();
+      }
+    } catch {}
   });
 
   it("injects user for active token", async () => {

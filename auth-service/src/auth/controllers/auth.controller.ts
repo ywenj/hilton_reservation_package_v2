@@ -8,15 +8,15 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { Request as ExpressRequest } from "express";
-import { AuthService } from "./auth.service";
-import { IntrospectionService } from "./introspection.service";
-import { IntrospectRequestDto } from "./dto/introspect.dto";
-import { BasicAuthGuard } from "./guards/basic-auth.guard";
-import { JwtAuthGuard } from "./guards/jwt-auth.guard";
-import { RegisterEmployeeDto } from "./dto/register-employee.dto";
-import { RegisterGuestDto } from "./dto/register-guest.dto";
-import { LoginEmployeeDto } from "./dto/login-employee.dto";
-import { LoginGuestDto } from "./dto/login-guest.dto";
+import { AuthService } from "../services/auth.service";
+import { IntrospectionService } from "../services/introspection.service";
+import { IntrospectRequestDto } from "../dto/introspect.dto";
+import { BasicAuthGuard } from "../guards/basic-auth.guard";
+import { JwtAuthGuard } from "../guards/jwt-auth.guard";
+import { RegisterEmployeeDto } from "../dto/register-employee.dto";
+import { RegisterGuestDto } from "../dto/register-guest.dto";
+import { LoginEmployeeDto } from "../dto/login-employee.dto";
+import { LoginGuestDto } from "../dto/login-guest.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -25,16 +25,13 @@ export class AuthController {
     private introspectionService: IntrospectionService
   ) {}
 
-  // Employee registration (username + password)
   @Post("register/employee")
   async registerEmployee(@Body() body: RegisterEmployeeDto) {
     return this.authService.registerEmployee(body.username, body.password);
   }
 
-  // Guest registration (email + phone 至少一个; 可选 username)
   @Post("register/guest")
   async registerGuest(@Body() body: RegisterGuestDto) {
-    console.log(`registerGuest-body: ${JSON.stringify(body)}`);
     if (!body.email && !body.phone) {
       throw new BadRequestException("Email or phone required");
     }
@@ -62,7 +59,6 @@ export class AuthController {
     return token;
   }
 
-  // Basic HTTP auth endpoint retained for employees with Basic auth header
   @UseGuards(BasicAuthGuard)
   @Post("basic-login")
   async basicLogin(@Request() req: ExpressRequest & { user?: any }) {

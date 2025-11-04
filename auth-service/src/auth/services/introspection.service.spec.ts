@@ -23,7 +23,6 @@ describe("IntrospectionService", () => {
     }).compile();
     service = module.get(IntrospectionService);
     jwt = module.get(JwtService);
-    // Silence expected error logs for malformed / expired token cases
     jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
