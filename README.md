@@ -392,18 +392,6 @@ docker compose up -d --build
 5. **Schema 快照**：`schema.gql` 让非 TypeScript 读者也能快速了解 API 形状。
 6. **可演进性**：保留空间添加 `scripts/`（数据迁移、批处理）或 `infrastructure/`（IaC）。
 
-### 可能的未来结构演进
-
-| 需求         | 演进方向                                    |
-| ------------ | ------------------------------------------- |
-| 多团队协作   | 引入 Nx / Turborepo 做缓存与任务编排        |
-| 多域拆分     | 加 Federation Gateway 或 API Gateway 聚合   |
-| 代码生成     | 使用 GraphQL Codegen 生成前端类型与 hooks   |
-| Infra 代码化 | 新增 infra/ 编写 Terraform / CDK 定义云资源 |
-| 更细权限     | 新增 RBAC/ABAC 模块（策略引擎）             |
-
----
-
 ## ✅ 测试报告（Test Report）
 
 ### 运行环境
@@ -439,8 +427,6 @@ docker compose up -d --build
 - `reservations.service`：创建、更新、状态变更、用户关联。
 - `introspection.client`：缓存 + 远程调用逻辑。
 - 上下文授权（context.auth）基础校验。
-
-备注：测试结束后 Jest 提示可能存在未关闭的异步句柄（common 于某些 Mongoose 连接未显式关闭）。可在后续优化中在 `afterAll` 中关闭连接或启用 `--detectOpenHandles` 进一步排查。
 
 ### Frontend (Vitest)
 
