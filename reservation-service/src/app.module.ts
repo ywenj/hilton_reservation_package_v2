@@ -7,6 +7,8 @@ import { join } from "path";
 import * as dotenv from "dotenv";
 import { IntrospectionClient } from "./common/auth/introspection.client";
 import { AuthSupportModule } from "./common/auth/auth-support.module";
+import { LoggingModule } from "./common/logging/logging.module";
+import { AppLogger } from "./common/logging/app-logger";
 dotenv.config({ path: ".env" });
 
 // 通过 Nest 注入 IntrospectionClient，避免手动生命周期管理。
@@ -17,11 +19,15 @@ dotenv.config({ path: ".env" });
         "mongodb://localhost:27017/hilton_reservations"
     ),
     AuthSupportModule,
+    LoggingModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
       imports: [AuthSupportModule],
-      inject: [IntrospectionClient],
-      useFactory: (introspectionClient: IntrospectionClient) => ({
+      inject: [IntrospectionClient, AppLogger],
+      useFactory: (
+        introspectionClient: IntrospectionClient,
+        appLogger: AppLogger
+      ) => ({
         autoSchemaFile: join(process.cwd(), "src/schema.gql"),
         plugins: [],
         validationRules: [require("graphql-depth-limit")(3)],
@@ -41,12 +47,14 @@ dotenv.config({ path: ".env" });
         context: async ({ req }: { req: any }) => {
           const auth = req.headers?.authorization || "";
           const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
+          appLogger.attachRequest(req);
           if (!process.env.AUTH_INTROSPECTION_URL || !token) {
             return { req, user: null };
           }
           try {
             const r = await introspectionClient.introspect(token);
             if (r.active) {
+              appLogger.setUser({ sub: r.sub });
               return {
                 req,
                 user: {

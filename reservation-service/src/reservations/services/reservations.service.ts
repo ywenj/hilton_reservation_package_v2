@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Reservation, ReservationStatus } from "../schemas/reservation.schema";
@@ -16,6 +16,7 @@ export class ReservationsService {
     @InjectModel(Reservation.name)
     private readonly reservationModel: Model<Reservation>
   ) {}
+  private readonly logger = new Logger(ReservationsService.name);
 
   async create(
     input: CreateReservationInput & {
@@ -25,18 +26,27 @@ export class ReservationsService {
       contactPhone?: string;
     }
   ): Promise<Reservation> {
+    this.logger.debug(
+      `Create reservation userId=${input.userId} tableSize=${input.tableSize}`
+    );
     const created = await this.reservationModel.create({
       ...input,
       status: ReservationStatus.Requested,
     });
+    this.logger.log(`Reservation created id=${created._id}`);
     return created;
   }
 
   async findById(id: string): Promise<Reservation | null> {
-    return this.reservationModel.findById(id).exec();
+    const r = await this.reservationModel.findById(id).exec();
+    if (!r) this.logger.debug(`Reservation not found id=${id}`);
+    return r;
   }
 
   async query(filters: QueryFilters): Promise<Reservation[]> {
+    this.logger.debug(
+      `Query reservations date=${filters.date} status=${filters.status}`
+    );
     const mongoFilters: any = {};
     if (filters.date) {
       const dayStart = new Date(filters.date);
@@ -50,17 +60,22 @@ export class ReservationsService {
     if (filters.status) {
       mongoFilters.status = filters.status;
     }
-    return this.reservationModel
+    const res = await this.reservationModel
       .find(mongoFilters)
       .sort({ expectedArrival: 1 })
       .exec();
+    this.logger.debug(`Query result count=${res.length}`);
+    return res;
   }
 
   async findByUser(userId: string): Promise<Reservation[]> {
-    return this.reservationModel
+    this.logger.debug(`FindByUser userId=${userId}`);
+    const res = await this.reservationModel
       .find({ userId })
       .sort({ expectedArrival: 1 })
       .exec();
+    this.logger.debug(`FindByUser count=${res.length}`);
+    return res;
   }
 
   async update(
@@ -71,6 +86,7 @@ export class ReservationsService {
       .findByIdAndUpdate(id, { $set: input }, { new: true })
       .exec();
     if (!updated) throw new NotFoundException("Reservation not found");
+    this.logger.log(`Reservation updated id=${id}`);
     return updated;
   }
 
@@ -79,6 +95,7 @@ export class ReservationsService {
       .findByIdAndUpdate(id, { $set: { status } }, { new: true })
       .exec();
     if (!updated) throw new NotFoundException("Reservation not found");
+    this.logger.log(`Status changed id=${id} status=${status}`);
     return updated;
   }
 }

@@ -23,6 +23,10 @@ describe("ReservationsResolver (unit)", () => {
     }).compile();
     resolver = moduleRef.get(ReservationsResolver);
     jest.clearAllMocks();
+    if ((resolver as any).logger) {
+      jest.spyOn((resolver as any).logger, "debug");
+      jest.spyOn((resolver as any).logger, "log");
+    }
   });
 
   it("delegates reservations query", async () => {
@@ -33,6 +37,9 @@ describe("ReservationsResolver (unit)", () => {
       status: "Requested",
     });
     expect(res).toEqual([]);
+    if ((resolver as any).logger) {
+      expect((resolver as any).logger.debug).toHaveBeenCalled();
+    }
   });
 
   it("delegates myReservations with user id", async () => {
@@ -81,6 +88,9 @@ describe("ReservationsResolver (unit)", () => {
       expect.objectContaining({ userId: "u2", guestName: "Alice" })
     );
     expect(res).toEqual({ _id: "r2" });
+    if ((resolver as any).logger) {
+      expect((resolver as any).logger.log).toHaveBeenCalled();
+    }
   });
 
   it("cancelMyReservation sets status when permitted", async () => {

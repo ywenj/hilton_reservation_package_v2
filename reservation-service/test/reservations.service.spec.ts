@@ -38,6 +38,10 @@ describe("ReservationsService (unit)", () => {
     }).compile();
 
     service = module.get<ReservationsService>(ReservationsService);
+    if ((service as any).logger) {
+      jest.spyOn((service as any).logger, "debug");
+      jest.spyOn((service as any).logger, "log");
+    }
   });
 
   it("service should be defined", () => {
@@ -60,6 +64,10 @@ describe("ReservationsService (unit)", () => {
 
     const res = await service.create(dto as any);
     expect(model.create).toHaveBeenCalled();
+    if ((service as any).logger) {
+      expect((service as any).logger.debug).toHaveBeenCalled();
+      expect((service as any).logger.log).toHaveBeenCalled();
+    }
   });
 
   it("findById should return reservation when found", async () => {

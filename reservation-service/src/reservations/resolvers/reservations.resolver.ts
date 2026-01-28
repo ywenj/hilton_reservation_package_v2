@@ -1,5 +1,6 @@
 import { Resolver, Query, Mutation, Args } from "@nestjs/graphql";
 import { ReservationsService } from "../services/reservations.service";
+import { Logger } from "@nestjs/common";
 import { Reservation } from "../schemas/reservation.schema";
 import { CreateReservationInput } from "../dto/create-reservation.input";
 import { UpdateReservationInput } from "../dto/update-reservation.input";
@@ -17,6 +18,7 @@ import { ReservationStatus } from "../schemas/reservation.schema";
 @Resolver(() => Reservation)
 export class ReservationsResolver {
   constructor(private reservationsService: ReservationsService) {}
+  private readonly logger = new Logger(ReservationsResolver.name);
 
   @Query(() => [Reservation])
   @UseGuards(new GqlAuthGuard({ roles: [UserRole.Employee] }))
@@ -24,12 +26,14 @@ export class ReservationsResolver {
     @Args("date", { nullable: true }) date?: string,
     @Args("status", { nullable: true }) status?: string
   ) {
+    this.logger.debug(`reservations query date=${date} status=${status}`);
     return this.reservationsService.query({ date, status });
   }
 
   @Query(() => [Reservation])
   @UseGuards(new GqlAuthGuard({ roles: [UserRole.Guest] }))
   async myReservations(@CurrentUser() user: JwtUser) {
+    this.logger.debug(`myReservations user=${user.sub}`);
     return this.reservationsService.findByUser(user.sub);
   }
 
@@ -50,6 +54,9 @@ export class ReservationsResolver {
     @Args("input") input: CreateReservationInput,
     @CurrentUser() user: JwtUser
   ) {
+    this.logger.log(
+      `createReservation user=${user.sub} tableSize=${input.tableSize}`
+    );
     return this.reservationsService.create({
       ...input,
       userId: user.sub,
@@ -66,6 +73,7 @@ export class ReservationsResolver {
     @Args("id") id: string,
     @Args("input") input: UpdateReservationInput
   ) {
+    this.logger.log(`updateReservation id=${id}`);
     return this.reservationsService.update(id, input as any);
   }
 
@@ -75,6 +83,7 @@ export class ReservationsResolver {
     @Args("id") id: string,
     @Args("status") status: string
   ) {
+    this.logger.log(`setReservationStatus id=${id} status=${status}`);
     return this.reservationsService.setStatus(id, status as any);
   }
 
@@ -94,6 +103,7 @@ export class ReservationsResolver {
     ) {
       return r as any;
     }
+    this.logger.log(`cancelMyReservation id=${id} user=${user.sub}`);
     return this.reservationsService.setStatus(id, ReservationStatus.Cancelled);
   }
 }

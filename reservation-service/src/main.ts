@@ -3,6 +3,7 @@ import { AppModule } from "./app.module";
 import "reflect-metadata";
 import * as dotenv from "dotenv";
 import { LoggingInterceptor } from "./common/logging.interceptor";
+import { AppLogger } from "./common/logging/app-logger";
 import { GlobalGraphQLExceptionFilter } from "./common/graphql-exception.filter";
 dotenv.config({ path: ".env" });
 
@@ -20,12 +21,14 @@ async function bootstrap() {
       maxAge: 3600,
     },
   });
+  const logger = app.get(AppLogger);
+  app.useLogger(logger);
   app.useGlobalInterceptors(new LoggingInterceptor());
   app.useGlobalFilters(new GlobalGraphQLExceptionFilter());
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(
+  logger.log(
     `Reservation Service listening on http://localhost:${port}/graphql`
   );
 }
