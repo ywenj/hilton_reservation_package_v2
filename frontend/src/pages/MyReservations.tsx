@@ -53,7 +53,7 @@ function MyReservations() {
     }
   };
 
-  const FINAL_STATUSES = ["Cancelled", "Completed"];
+  const FINAL_STATUSES = ["Approved", "Cancelled", "Completed"];
 
   return (
     <div style={{ padding: 24 }}>

@@ -89,21 +89,26 @@ export default function LoginPage() {
                     <Input autoComplete="username" />
                   </Form.Item>
                   <Form.Item
+                    name="phone"
+                    label="Phone"
+                    rules={[
+                      {
+                        required: true,
+                        pattern: /^[0-9\-+]{6,20}$/,
+                        message: "Invalid phone",
+                      },
+                    ]}
+                  >
+                    <Input autoComplete="tel" />
+                  </Form.Item>
+                  <Form.Item
                     name="email"
                     label="Email"
                     rules={[{ type: "email", message: "Invalid email" }]}
                   >
                     <Input autoComplete="email" />
                   </Form.Item>
-                  <Form.Item
-                    name="phone"
-                    label="Phone"
-                    rules={[
-                      { pattern: /^[0-9\-+]{6,20}$/, message: "Invalid phone" },
-                    ]}
-                  >
-                    <Input autoComplete="tel" />
-                  </Form.Item>
+
                   <Form.Item shouldUpdate noStyle>
                     {() => {
                       // show helper only when both contact fields empty

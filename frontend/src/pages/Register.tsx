@@ -34,7 +34,7 @@ export default function RegisterPage() {
       window.location.replace("/");
     } catch (err: any) {
       message.error(
-        JSON.parse((err as Error).message).message || "Register failed"
+        JSON.parse((err as Error).message).message || "Register failed",
       );
     }
   };
@@ -94,17 +94,11 @@ export default function RegisterPage() {
           {role === "guest" && (
             <>
               <Form.Item
-                name="email"
-                label="Email"
-                rules={[{ type: "email", message: "Invalid email" }]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
                 name="phone"
                 label="Phone"
                 rules={[
                   {
+                    required: true,
                     pattern: /^(?:\+?86)?(?:1[3-9]\d{9}|0\d{2,3}-?\d{7,8})$/,
                     message: "手机号格式错误",
                   },
@@ -112,6 +106,14 @@ export default function RegisterPage() {
               >
                 <Input placeholder="例如: 13812345678 或 010-12345678" />
               </Form.Item>
+              <Form.Item
+                name="email"
+                label="Email"
+                rules={[{ type: "email", message: "Invalid email" }]}
+              >
+                <Input />
+              </Form.Item>
+
               <div
                 style={{
                   fontSize: 12,
@@ -120,7 +122,7 @@ export default function RegisterPage() {
                   marginBottom: 12,
                 }}
               >
-                Guest: Email 或 Phone 至少填写一个
+                Guest: Phone 必填，Email 可选；
               </div>
             </>
           )}

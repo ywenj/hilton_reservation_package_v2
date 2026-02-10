@@ -20,7 +20,8 @@ services:
       COSMOS_MONGO_URI: mongodb://mongo:27017/hilton_reservations
       PORT: 5000
       JWT_SECRET: dd9eddf2-01a3-468b-8f3e-18f427d898c5
-      JWT_EXPIRES_IN: 3600s
+      JWT_EXPIRES_IN: 3600s,
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000
     ports:
       - "5000:5000"
     depends_on:
@@ -41,6 +42,7 @@ services:
       GRAPHQL_PLAYGROUND: "true"
       AUTH_INTROSPECTION_URL: http://auth-service:5000/auth/introspect
       INTROSPECTION_CACHE_TTL_MS: 60000
+      CORS_ORIGINS: http://localhost:3000,http://localhost:5173
     ports:
       - "4000:4000"
     depends_on:
