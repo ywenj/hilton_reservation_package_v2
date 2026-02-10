@@ -1,6 +1,6 @@
 # Hilton Reservation
 
-本项目提供一个示例性的「预订（Reservation）」全栈结构：后端采用 NestJS + GraphQL + Mongoose，前端采用 React + Vite + Apollo Client，并包含一个用于 JWT 校验/用户角色管理的独立认证服务（auth-service）。当前版本在单元测试、Schema 示例、按钮/状态管理以及更清晰的角色分离方面做了增强。
+本项目提供一个示例性的「预订（Reservation）」全栈结构：后端采用 NestJS + GraphQL + MongoDB，前端采用 React + Vite + Apollo Client，并包含一个用于 JWT 校验/用户角色管理的独立认证服务（auth-service）。当前版本在单元测试、Schema 示例、按钮/状态管理以及更清晰的角色分离方面做了增强。
 
 > 说明：以下文档为原英文 README 的中文翻译与结构化 Markdown 版本；环境变量与字段名等技术标识保留英文。
 
