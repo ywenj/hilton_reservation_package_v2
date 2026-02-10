@@ -16,17 +16,17 @@ dotenv.config({ path: ".env" });
   imports: [
     MongooseModule.forRoot(
       process.env.COSMOS_MONGO_URI ||
-        "mongodb://localhost:27017/hilton_reservations"
+        "mongodb://localhost:27017/hilton_reservations",
     ),
     AuthSupportModule,
     LoggingModule,
     GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      imports: [AuthSupportModule],
+      imports: [AuthSupportModule, LoggingModule],
       inject: [IntrospectionClient, AppLogger],
       useFactory: (
         introspectionClient: IntrospectionClient,
-        appLogger: AppLogger
+        appLogger: AppLogger,
       ) => ({
         autoSchemaFile: join(process.cwd(), "src/schema.gql"),
         plugins: [],

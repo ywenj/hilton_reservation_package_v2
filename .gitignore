@@ -48,7 +48,10 @@ Thumbs.db
 
 # Environment
 /.env
-/auth-service/.env
+/reservation-service/*.env*
+/frontend/*.env*
+/auth-service/*.env*    
 .npmrc
 .vscode/
+*.docx
 

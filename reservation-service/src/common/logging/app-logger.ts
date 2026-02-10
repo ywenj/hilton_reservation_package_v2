@@ -1,9 +1,9 @@
-import { Logger, LogLevel } from "@nestjs/common";
+import { ConsoleLogger, LogLevel } from "@nestjs/common";
 import { randomUUID } from "crypto";
 
 const order: LogLevel[] = ["error", "warn", "log", "debug", "verbose"];
 
-export class AppLogger extends Logger {
+export class AppLogger extends ConsoleLogger {
   private minLevel: LogLevel;
   private json: boolean;
   private serviceName: string;

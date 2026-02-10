@@ -6,6 +6,78 @@
 
 ---
 
+## 🏗️ 系统架构（System Architecture）
+
+```mermaid
+graph LR
+    Browser["🌐 User Browser<br/>& Client"]
+
+    Frontend["<b>Frontend</b><br/>React + Vite<br/>Apollo Client<br/>Port: 3000/5173<br/><br/>• Login/Register<br/>• My Reservations<br/>• Admin Dashboard"]
+
+    AuthService["<b>Auth Service</b><br/>NestJS + JWT<br/>Port: 5000<br/><br/>• Employee Register<br/>• Guest Register<br/>• Login<br/>• Introspect Token"]
+
+    ReservationService["<b>Reservation Service</b><br/>NestJS + GraphQL<br/>Port: 4000<br/><br/>• Query Reservations<br/>• Create Reservation<br/>• Update Status<br/>• List Management"]
+
+    Cache["⚡ Token Cache<br/>TTL: 30s<br/><br/>Introspection<br/>Result Cache"]
+
+    MongoDB["<b>🗄️ MongoDB</b><br/><b>Data Storage</b><br/>Port: 27017<br/><br/>• Users Collection<br/>• Reservations Collection<br/>• Tokens & Sessions"]
+
+    Browser -->|REST: POST /auth/| Frontend
+    Browser -->|GraphQL: with JWT| ReservationService
+
+    Frontend -->|REST: POST /auth/| AuthService
+    Frontend -->|GraphQL: POST /graphql| ReservationService
+
+    ReservationService -->|POST /auth/introspect<br/>with JWT Token| AuthService
+
+    ReservationService --> Cache
+    Cache -->|cached result| AuthService
+
+    AuthService -->|Read/Write| MongoDB
+    ReservationService -->|Read/Write| MongoDB
+
+    style Browser fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style Frontend fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    style AuthService fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style ReservationService fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style MongoDB fill:#ffccbc,stroke:#d84315,stroke-width:3px,color:#000
+    style Cache fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+```
+
+### 架构说明
+
+- **Frontend**：React + Vite 前端应用，通过 Apollo Client 与后端通信
+- **Auth Service**：独立的认证服务，负责用户注册、登录、Token 校验
+- **Reservation Service**：核心业务服务，提供 GraphQL API，通过 introspection 调用 Auth Service 验证 Token
+- **🗄️ MongoDB**：共享数据库存储，采用特殊图标标识，存储用户、预约、Token 等数据
+- **Token Cache**：减少频繁调用 Auth Service 的 introspection 端点，提升性能
+
+### 关键交互流程
+
+#### 1. **认证流程**
+
+- Guest 登录：发送 email/phone → Auth-Service 验证 → 签发 JWT
+- Employee 登录：发送 username/password → Auth-Service 验证密码 → 签发 JWT
+
+#### 2. **预订操作流程**
+
+- 前端发送 GraphQL Query/Mutation（包含 JWT 在 Authorization header）
+- Reservation-Service 接收请求
+- 调用 Auth-Service 的 introspection 端点验证 Token（带 TTL 缓存）
+- 根据 Token 中的角色（role）与用户 ID（sub）执行对应操作
+- MongoDB 中查询/修改数据，返回结果给前端
+
+#### 3. **权限分离**
+
+| 操作         | Guest | Employee |
+| ------------ | ----- | -------- |
+| 查看个人预约 | ✅    | ✅       |
+| 创建预约     | ✅    | ✅       |
+| 管理全部预约 | ❌    | ✅       |
+| 修改预约状态 | ❌    | ✅       |
+
+---
+
 ## 🔧 核心说明
 
 1. `docker-compose.yml` 中使用了一个本地 docker MongoDB 容器。
@@ -203,16 +275,6 @@ A: 可针对复杂查询引入 in-memory-mongodb（如 `mongodb-memory-server`�
 
 ---
 
-## 📜 License
-
-本示例未显式声明开源协议；若要在生产中使用，请根据公司政策补充 LICENSE，并审查安全/合规项。
-
----
-
-如需英文版或增补更多章节（部署、CI/CD、监控、日志规范等），欢迎提出需求。祝开发顺利！
-
----
-
 ## 🚢 部署与运行说明（Deployment & Run）
 
 ### 1. 本地快速开发（不使用 Docker 全编排）
@@ -229,7 +291,9 @@ npm install
 npm run start:dev
 ```
 
-默认监听 `3001`。 3. 进入 `reservation-service`：
+默认监听 `3001`。
+
+3. 进入 `reservation-service`：
 
 ```bash
 cd reservation-service
@@ -245,7 +309,9 @@ EOF
 npm run start:dev
 ```
 
-默认监听 `3002`。 4. 前端：
+默认监听 `3002`。
+
+4. 前端：
 
 ```bash
 cd frontend

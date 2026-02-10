@@ -1,7 +1,4 @@
-version: '3.8'
 services:
-  # For local development we provide a MongoDB container that can serve as a local stand-in for
-  # Azure Cosmos DB (Mongo API). For production, replace COSMOS_MONGO_URI in .env with your Cosmos connection string.
   mongo:
     image: mongo:6.0
     container_name: local_cosmos_mongo_emulator
@@ -13,31 +10,54 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  backend:
+  auth-service:
     build:
-      context: .
-      dockerfile: Dockerfile.backend
-    container_name: hilton_backend
+      context: auth-service
+      dockerfile: Dockerfile
+    container_name: hilton_auth_service
     restart: unless-stopped
-    env_file:
-      - backend/.env.example
     environment:
       COSMOS_MONGO_URI: mongodb://mongo:27017/hilton_reservations
+      PORT: 5000
+      JWT_SECRET: dd9eddf2-01a3-468b-8f3e-18f427d898c5
+      JWT_EXPIRES_IN: 3600s
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongo
+
+  reservation-service:
+    build:
+      context: reservation-service
+      dockerfile: Dockerfile
+    container_name: hilton_reservation_service
+    restart: unless-stopped
+    environment:
+      # Override .env for Docker networking
+      COSMOS_MONGO_URI: mongodb://mongo:27017/hilton_reservations
+      PORT: 4000
+      JWT_SECRET: dd9eddf2-01a3-468b-8f3e-18f427d898c5
+      JWT_EXPIRES_IN: 3600s
+      GRAPHQL_PLAYGROUND: "true"
+      AUTH_INTROSPECTION_URL: http://auth-service:5000/auth/introspect
+      INTROSPECTION_CACHE_TTL_MS: 60000
     ports:
       - "4000:4000"
     depends_on:
       - mongo
+      - auth-service
 
   frontend:
     build:
-      context: .
-      dockerfile: frontend/Dockerfile
+      context: frontend
+      dockerfile: Dockerfile
     container_name: hilton_frontend
     restart: unless-stopped
     ports:
       - "3000:80"
     depends_on:
-      - backend
+      - reservation-service
+      - auth-service
 
 volumes:
   mongo_data:

@@ -1,10 +1,27 @@
-FROM node:20-alpine AS build
-WORKDIR /usr/src/app
-COPY frontend/package.json frontend/package-lock.json* ./
-COPY frontend ./frontend
-WORKDIR /usr/src/app/frontend
-RUN npm install
+# Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json* ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source
+COPY . .
+
+# Build
 RUN npm run build
+
+# Runtime stage
 FROM nginx:stable-alpine
-COPY --from=build /usr/src/app/frontend/build /usr/share/nginx/html
+
+# Copy built files
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy custom nginx config for SPA routing
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 80
