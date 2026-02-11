@@ -87,14 +87,6 @@ graph LR
 
 ---
 
-## 🆕 Changelog v2
-
-- 新增 `schema.gql` 示例文件（GraphQL Schema Snapshot）。
-- 改进单元测试：mock Mongoose 模型方法，减少真实 DB 依赖。
-- 调整 backend Dockerfile 以便更顺畅的开发运行（dev run）。
-
----
-
 ## 🔐 认证与环境（Reservation Service）
 
 在 `reservation-service/.env` 中需要设置（示例）：
@@ -242,26 +234,6 @@ POST /auth/introspect { token }
 
 ---
 
-## 🚀 后续潜在增强（Future Enhancements）
-
-- 为 guest 的注册登录返回真实签名的 JWT（替换演示 token 逻辑）。
-- Apollo 缓存：为状态更新添加乐观（optimistic）响应。
-- 列表分页 & 高级过滤（日期范围 / 状态 / 关键词等）。
-- Guest 账号的密码可选设置/重置流程。
-- 登录接口限流（Rate Limiting）。
-
----
-
-## 📁 额外建议（非原文新增）
-
-若后续继续扩展，建议：
-
-- 抽离统一的状态枚举与显示映射（前后端共享）。
-- 引入 E2E 测试（Playwright / Cypress）验证多角色主流程。
-- 增加错误码（Error Codes）与前端友好提示映射。
-
----
-
 ## ❓ 常见问题 (FAQ)
 
 **Q: 为什么要用 introspection 而不是直接在服务里验证 JWT？**  
@@ -277,57 +249,9 @@ A: 可针对复杂查询引入 in-memory-mongodb（如 `mongodb-memory-server`�
 
 ## 🚢 部署与运行说明（Deployment & Run）
 
-### 1. 本地快速开发（不使用 Docker 全编排）
+### 1. 使用 docker-compose（推荐集成演示）
 
-后端与前端均需 Node.js (推荐 >=18)。
-
-1. 启动本地 MongoDB（可用 docker：`docker run -d -p 27017:27017 --name local-mongo mongo:6`）。
-2. 进入 `auth-service`：
-
-```bash
-cd auth-service
-cp .env.example .env   # 如果存在示例文件（无则跳过）
-npm install
-npm run start:dev
-```
-
-默认监听 `3001`。
-
-3. 进入 `reservation-service`：
-
-```bash
-cd reservation-service
-npm install
-# 创建 .env（示例）
-cat > .env <<'EOF'
-COSMOS_MONGO_URI=mongodb://localhost:27017/hilton_reservations
-JWT_SECRET=change_me_dev
-CORS_ORIGINS=http://localhost:5173
-AUTH_INTROSPECTION_URL=http://localhost:3001/auth/introspect
-INTROSPECTION_CACHE_TTL_MS=30000
-EOF
-npm run start:dev
-```
-
-默认监听 `3002`。
-
-4. 前端：
-
-```bash
-cd frontend
-npm install
-cat > .env <<'EOF'
-VITE_GRAPHQL_ENDPOINT=http://localhost:3002/graphql
-VITE_AUTH_BASE_URL=http://localhost:3001
-EOF
-npm run dev
-```
-
-打开浏览器访问 `http://localhost:5173`。 5. 注册员工账户：POST `http://localhost:3001/auth/register/employee`（或用前端注册页面/临时脚本）。 6. 登录后访问不同角色菜单；Guest 通过 `/auth/register/guest` 注册。
-
-### 2. 使用 docker-compose（推荐集成演示）
-
-项目根目录已有 `docker-compose.yml`（假设服务命名：auth、reservation、mongo、frontend）：
+项目根目录已有 `docker-compose.yml`,运行如下命令启动所有服务：
 
 ```bash
 docker compose up -d --build
@@ -368,14 +292,7 @@ docker compose up -d --build
 - 通过 CI/CD（GitHub Actions）在合并主分支后自动构建并推送镜像。
 - 使用 K8s RollingUpdate，若探针失败即回滚；或利用 Argo Rollouts 做金丝雀发布。
 
-### 5. 数据迁移/演进
-
-当前模型较轻，无专门 migration 工具；若未来需要：
-
-- 可引入 `migrate-mongo` 或自建迁移集合记录执行历史。
-- 重大字段演变时保留向后兼容读取逻辑（双写/懒迁移）。
-
-### 6. 常见部署踩坑提示
+### 5. 常见部署踩坑提示
 
 | 场景               | 症状                | 排查要点                                      |
 | ------------------ | ------------------- | --------------------------------------------- |
@@ -508,12 +425,5 @@ docker compose up -d --build
 - 状态颜色映射完整性（无重复颜色）。
 
 警告：React Router v7 未来 flag/`act` 包裹提示（UI 行为不受影响）。可在后续测试中使用 `userEvent`/`act` 包装或启用未来标志解决。
-
-### 测试改进建议（Next）
-
-- 添加 Reservation 前端交互集成测试（创建/编辑/取消全流程）。
-- 引入 GraphQL Mock Server（例如 `msw` + `graphql`）进行组件隔离测试。
-- 后端增加错误分支（异常路径）覆盖率与权限拒绝用例。
-- 使用覆盖率报告 (`--coverage`) 量化盲区。
 
 ---
