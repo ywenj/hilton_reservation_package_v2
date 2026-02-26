@@ -2,14 +2,14 @@ import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { User, UserDocument } from "../schemas/user.schema";
-import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
   private readonly logger = new Logger(AuthService.name);
@@ -19,7 +19,7 @@ export class AuthService {
     const exists = await this.userModel.findOne({ username });
     if (exists) {
       this.logger.warn(
-        `Register failed: username already exists (${username})`
+        `Register failed: username already exists (${username})`,
       );
       throw new BadRequestException("User exists");
     }
@@ -27,7 +27,7 @@ export class AuthService {
     const created = new this.userModel({ username, password: hashed, role });
     await created.save();
     this.logger.log(
-      `Register success id=${created._id} username=${created.username}`
+      `Register success id=${created._id} username=${created.username}`,
     );
     return { id: created._id, username: created.username, role: created.role };
   }
@@ -56,7 +56,7 @@ export class AuthService {
       const exists = await this.userModel.findOne({ username });
       if (exists) {
         this.logger.warn(
-          `Employee register failed: exists username=${username}`
+          `Employee register failed: exists username=${username}`,
         );
         throw new BadRequestException("User exists");
       }
@@ -76,13 +76,13 @@ export class AuthService {
     } catch (err: any) {
       if (err?.code === 11000) {
         this.logger.warn(
-          `Employee register duplicate key username=${username}`
+          `Employee register duplicate key username=${username}`,
         );
         throw new BadRequestException("Duplicate key");
       }
       this.logger.error(
         `Employee register error username=${username}`,
-        err?.stack
+        err?.stack,
       );
       throw err;
     }
@@ -101,7 +101,7 @@ export class AuthService {
     }
     try {
       this.logger.debug(
-        `Guest register attempt username=${data.username} email=${data.email} phone=${data.phone}`
+        `Guest register attempt username=${data.username} email=${data.email} phone=${data.phone}`,
       );
       const u = await this.userModel.findOne({ username: data.username });
       if (u) throw new BadRequestException("Username exists");
@@ -133,13 +133,13 @@ export class AuthService {
     } catch (err: any) {
       if (err?.code === 11000) {
         this.logger.warn(
-          `Guest register duplicate key username=${data.username}`
+          `Guest register duplicate key username=${data.username}`,
         );
         throw new BadRequestException("Duplicate key");
       }
       this.logger.error(
         `Guest register error username=${data.username}`,
-        err?.stack
+        err?.stack,
       );
       throw err;
     }
