@@ -16,7 +16,7 @@ dotenv.config({ path: ".env" });
   imports: [
     MongooseModule.forRoot(
       process.env.COSMOS_MONGO_URI ||
-        "mongodb://localhost:27017/hilton_reservations",
+        "mongodb://mongo:27017/hilton_reservations",
     ),
     AuthSupportModule,
     LoggingModule,
