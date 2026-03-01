@@ -8,6 +8,17 @@ import {
 import { GqlArgumentsHost } from "@nestjs/graphql";
 import { AppErrorCode, NormalizedErrorShape } from "./error-codes";
 
+/** Error with Apollo-compatible extensions for GraphQL error responses */
+interface GraphQLFormattedError extends Error {
+  extensions: {
+    code: AppErrorCode;
+    status: number;
+    details?: unknown;
+    timestamp: string;
+    path?: string;
+  };
+}
+
 @Catch()
 @Injectable()
 export class GlobalGraphQLExceptionFilter implements ExceptionFilter {
@@ -58,7 +69,7 @@ export class GlobalGraphQLExceptionFilter implements ExceptionFilter {
     console.error("[GraphQL Error]", JSON.stringify({ status, ...normalized }));
 
     // For GraphQL, we throw a new error to let Apollo format it. We attach extensions.
-    const errorWithExtensions: any = new Error(message);
+    const errorWithExtensions = new Error(message) as GraphQLFormattedError;
     errorWithExtensions.extensions = {
       code,
       status,
