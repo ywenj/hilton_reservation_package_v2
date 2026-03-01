@@ -44,12 +44,6 @@ export class AuthService {
     return null;
   }
 
-  async login(user: UserDocument) {
-    const payload = { username: user.username, sub: user._id, role: user.role };
-    this.logger.log(`Issuing token for sub=${user._id} role=${user.role}`);
-    return { access_token: this.jwtService.sign(payload) };
-  }
-
   async registerEmployee(username: string, password: string) {
     try {
       this.logger.debug(`Employee register attempt username=${username}`);
