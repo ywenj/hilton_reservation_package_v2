@@ -1,22 +1,19 @@
 import { InputType, Field, Int } from "@nestjs/graphql";
-import { IsISO8601, IsOptional, IsString, IsInt, Min } from "class-validator";
+import {
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsInt,
+  IsNotEmpty,
+  Min,
+} from "class-validator";
 
 @InputType()
 export class UpdateReservationInput {
-  // @Field({ nullable: true })
-  // @IsOptional()
-  // @IsString()
-  // guestName?: string;
-
-  // @Field({ nullable: true })
-  // @IsOptional()
-  // @IsString()
-  // contactPhone?: string;
-
-  // @Field({ nullable: true })
-  // @IsOptional()
-  // @IsString()
-  // contactEmail?: string;
+  @Field(() => Int, { description: "Optimistic lock version (required)" })
+  @IsNotEmpty()
+  @IsInt()
+  version!: number;
 
   @Field({ nullable: true })
   @IsOptional()

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Logger } from "@nestjs/common";
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Reservation, ReservationStatus } from "../schemas/reservation.schema";
@@ -14,7 +19,7 @@ interface QueryFilters {
 export class ReservationsService {
   constructor(
     @InjectModel(Reservation.name)
-    private readonly reservationModel: Model<Reservation>
+    private readonly reservationModel: Model<Reservation>,
   ) {}
   private readonly logger = new Logger(ReservationsService.name);
 
@@ -24,10 +29,10 @@ export class ReservationsService {
       guestName?: string;
       contactEmail?: string;
       contactPhone?: string;
-    }
+    },
   ): Promise<Reservation> {
     this.logger.debug(
-      `Create reservation userId=${input.userId} tableSize=${input.tableSize}`
+      `Create reservation userId=${input.userId} tableSize=${input.tableSize}`,
     );
     const created = await this.reservationModel.create({
       ...input,
@@ -45,7 +50,7 @@ export class ReservationsService {
 
   async query(filters: QueryFilters): Promise<Reservation[]> {
     this.logger.debug(
-      `Query reservations date=${filters.date} status=${filters.status}`
+      `Query reservations date=${filters.date} status=${filters.status}`,
     );
     const mongoFilters: any = {};
     if (filters.date) {
@@ -80,22 +85,49 @@ export class ReservationsService {
 
   async update(
     id: string,
-    input: UpdateReservationInput
+    input: UpdateReservationInput,
   ): Promise<Reservation> {
+    const { version, ...updateFields } = input;
     const updated = await this.reservationModel
-      .findByIdAndUpdate(id, { $set: input }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, __v: version },
+        { $set: updateFields, $inc: { __v: 1 } },
+        { new: true },
+      )
       .exec();
-    if (!updated) throw new NotFoundException("Reservation not found");
-    this.logger.log(`Reservation updated id=${id}`);
+    if (!updated) {
+      const exists = await this.reservationModel.findById(id).exec();
+      if (!exists) throw new NotFoundException("Reservation not found");
+      throw new ConflictException(
+        "Reservation has been modified by another user. Please refresh and try again.",
+      );
+    }
+    this.logger.log(`Reservation updated id=${id} newVersion=${updated.__v}`);
     return updated;
   }
 
-  async setStatus(id: string, status: ReservationStatus): Promise<Reservation> {
+  async setStatus(
+    id: string,
+    status: ReservationStatus,
+    version: number,
+  ): Promise<Reservation> {
     const updated = await this.reservationModel
-      .findByIdAndUpdate(id, { $set: { status } }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, __v: version },
+        { $set: { status }, $inc: { __v: 1 } },
+        { new: true },
+      )
       .exec();
-    if (!updated) throw new NotFoundException("Reservation not found");
-    this.logger.log(`Status changed id=${id} status=${status}`);
+    if (!updated) {
+      const exists = await this.reservationModel.findById(id).exec();
+      if (!exists) throw new NotFoundException("Reservation not found");
+      throw new ConflictException(
+        "Reservation has been modified by another user. Please refresh and try again.",
+      );
+    }
+    this.logger.log(
+      `Status changed id=${id} status=${status} newVersion=${updated.__v}`,
+    );
     return updated;
   }
 }

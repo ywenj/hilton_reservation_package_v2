@@ -48,7 +48,12 @@ export default function AdminReservationsPage() {
 
   const onStatusChange = async (id: string, newStatus: string) => {
     try {
-      await setStatusMutation({ variables: { id, status: newStatus } });
+      const reservation = (data?.reservations || []).find(
+        (r: any) => r._id === id,
+      );
+      await setStatusMutation({
+        variables: { id, status: newStatus, version: reservation?.version },
+      });
       message.success("状态已更新");
       refetch();
     } catch (e: any) {
@@ -118,7 +123,7 @@ export default function AdminReservationsPage() {
                 {STATUS_OPTIONS.filter((ns) => ns !== r.status).map((ns) => {
                   const disabledFinal =
                     ["Cancelled", "Completed"].includes(
-                      STATUS_DISPLAY[r.status] ?? r.status
+                      STATUS_DISPLAY[r.status] ?? r.status,
                     ) || ["Cancelled", "Completed"].includes(r.status);
                   return (
                     <ActionButton

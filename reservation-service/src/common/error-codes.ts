@@ -3,6 +3,7 @@ export enum AppErrorCode {
   NOT_FOUND = "NOT_FOUND",
   INTERNAL_ERROR = "INTERNAL_ERROR",
   BAD_REQUEST = "BAD_REQUEST",
+  CONFLICT = "CONFLICT",
 }
 
 export interface NormalizedErrorShape {

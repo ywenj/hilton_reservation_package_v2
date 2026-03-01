@@ -164,6 +164,7 @@ function MyReservations() {
                       expectedArrival:
                         values.expectedArrival.format("YYYY-MM-DD HH:mm"),
                       tableSize: values.tableSize,
+                      version: editing.version,
                     },
                   },
                 });
@@ -253,7 +254,9 @@ function MyReservations() {
                     disabled={disabled}
                     onClick={async () => {
                       try {
-                        await cancelMyReservation({ variables: { id: r._id } });
+                        await cancelMyReservation({
+                          variables: { id: r._id, version: r.version },
+                        });
                         await refetch();
                         message.success("Cancelled");
                       } catch (e: any) {

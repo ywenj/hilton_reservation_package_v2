@@ -10,11 +10,14 @@ export enum ReservationStatus {
 }
 registerEnumType(ReservationStatus, { name: "ReservationStatus" });
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, optimisticConcurrency: true })
 @ObjectType()
 export class Reservation extends Document {
   @Field(() => ID)
   _id!: string;
+
+  @Field(() => Int, { name: "version", description: "Optimistic lock version" })
+  __v!: number;
 
   @Prop({ required: false, index: true })
   @Field({ nullable: true, description: "Owner user id (JWT sub)" })

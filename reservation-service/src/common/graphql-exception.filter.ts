@@ -36,6 +36,7 @@ export class GlobalGraphQLExceptionFilter implements ExceptionFilter {
         details = response;
       }
       if (status === 404) code = AppErrorCode.NOT_FOUND;
+      else if (status === 409) code = AppErrorCode.CONFLICT;
       else if (status === 400) code = AppErrorCode.BAD_REQUEST;
     } else if (exception?.name === "ValidationError") {
       code = AppErrorCode.VALIDATION_FAILED;

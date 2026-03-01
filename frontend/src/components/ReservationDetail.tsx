@@ -38,7 +38,7 @@ export const ReservationDetail: React.FC = () => {
 
   const changeStatus = async (status: string) => {
     try {
-      await setStatus({ variables: { id, status } });
+      await setStatus({ variables: { id, status, version: r.version } });
       api.success({
         message: "Status updated",
         description: `New status: ${status}`,
@@ -51,7 +51,10 @@ export const ReservationDetail: React.FC = () => {
   const bumpTableSize = async () => {
     try {
       await updateReservation({
-        variables: { id, input: { tableSize: r.tableSize + 1 } },
+        variables: {
+          id,
+          input: { tableSize: r.tableSize + 1, version: r.version },
+        },
       });
       api.success({ message: "Table size increased" });
     } catch (err: any) {

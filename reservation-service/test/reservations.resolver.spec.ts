@@ -85,7 +85,7 @@ describe("ReservationsResolver (unit)", () => {
       role: "guest",
     } as any);
     expect(serviceMock.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: "u2", guestName: "Alice" })
+      expect.objectContaining({ userId: "u2", guestName: "Alice" }),
     );
     expect(res).toEqual({ _id: "r2" });
     if ((resolver as any).logger) {
@@ -104,13 +104,13 @@ describe("ReservationsResolver (unit)", () => {
       _id: "r3",
       status: ReservationStatus.Cancelled,
     });
-    const res = await resolver.cancelMyReservation("r3", {
+    const res = await resolver.cancelMyReservation("r3", 1, {
       sub: "u3",
       role: "guest",
     } as any);
     expect(serviceMock.setStatus).toHaveBeenCalledWith(
       "r3",
-      ReservationStatus.Cancelled
+      ReservationStatus.Cancelled,
     );
     expect(res.status).toBe(ReservationStatus.Cancelled);
   });

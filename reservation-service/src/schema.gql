@@ -5,6 +5,9 @@
 type Reservation {
   _id: ID!
 
+  """Optimistic lock version"""
+  version: Int!
+
   """Owner user id (JWT sub)"""
   userId: String
   guestName: String!
@@ -31,8 +34,8 @@ type Query {
 type Mutation {
   createReservation(input: CreateReservationInput!): Reservation!
   updateReservation(id: String!, input: UpdateReservationInput!): Reservation!
-  setReservationStatus(id: String!, status: String!): Reservation!
-  cancelMyReservation(id: String!): Reservation!
+  setReservationStatus(id: String!, status: String!, version: Int!): Reservation!
+  cancelMyReservation(id: String!, version: Int!): Reservation!
 }
 
 input CreateReservationInput {
@@ -41,6 +44,8 @@ input CreateReservationInput {
 }
 
 input UpdateReservationInput {
+  """Optimistic lock version (required)"""
+  version: Int!
   expectedArrival: String
   tableSize: Int
 }

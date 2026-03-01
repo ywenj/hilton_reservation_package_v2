@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args } from "@nestjs/graphql";
+import { Resolver, Query, Mutation, Args, Int } from "@nestjs/graphql";
 import { ReservationsService } from "../services/reservations.service";
 import { Logger } from "@nestjs/common";
 import { Reservation } from "../schemas/reservation.schema";
@@ -24,7 +24,7 @@ export class ReservationsResolver {
   @UseGuards(new GqlAuthGuard({ roles: [UserRole.Employee] }))
   async reservations(
     @Args("date", { nullable: true }) date?: string,
-    @Args("status", { nullable: true }) status?: string
+    @Args("status", { nullable: true }) status?: string,
   ) {
     this.logger.debug(`reservations query date=${date} status=${status}`);
     return this.reservationsService.query({ date, status });
@@ -42,8 +42,7 @@ export class ReservationsResolver {
   async reservation(@Args("id") id: string, @CurrentUser() user: JwtUser) {
     const r = await this.reservationsService.findById(id);
     if (!r) return null;
-    if (user.role === UserRole.Employee || (r as any).userId === user.sub)
-      return r as any;
+    if (user.role === UserRole.Employee || r.userId === user.sub) return r;
     return null;
   }
 
@@ -52,10 +51,10 @@ export class ReservationsResolver {
   @UseGuards(new GqlAuthGuard({ roles: [UserRole.Guest] }))
   async createReservation(
     @Args("input") input: CreateReservationInput,
-    @CurrentUser() user: JwtUser
+    @CurrentUser() user: JwtUser,
   ) {
     this.logger.log(
-      `createReservation user=${user.sub} tableSize=${input.tableSize}`
+      `createReservation user=${user.sub} tableSize=${input.tableSize}`,
     );
     return this.reservationsService.create({
       ...input,
@@ -71,7 +70,7 @@ export class ReservationsResolver {
   @UseGuards(new GqlAuthGuard({ roles: [UserRole.Guest] }))
   async updateReservation(
     @Args("id") id: string,
-    @Args("input") input: UpdateReservationInput
+    @Args("input") input: UpdateReservationInput,
   ) {
     this.logger.log(`updateReservation id=${id}`);
     return this.reservationsService.update(id, input as any);
@@ -81,29 +80,31 @@ export class ReservationsResolver {
   @UseGuards(new GqlAuthGuard({ roles: [UserRole.Employee] }))
   async setReservationStatus(
     @Args("id") id: string,
-    @Args("status") status: string
+    @Args("status") status: string,
+    @Args("version", { type: () => Int }) version: number,
   ) {
-    this.logger.log(`setReservationStatus id=${id} status=${status}`);
-    return this.reservationsService.setStatus(id, status as any);
+    this.logger.log(`setReservationStatus id=${id} status=${status} version=${version}`);
+    return this.reservationsService.setStatus(id, status as any, version);
   }
 
   @Mutation(() => Reservation)
   @UseGuards(new GqlAuthGuard({ roles: [UserRole.Guest] }))
   async cancelMyReservation(
     @Args("id") id: string,
-    @CurrentUser() user: JwtUser
+    @Args("version", { type: () => Int }) version: number,
+    @CurrentUser() user: JwtUser,
   ) {
     const r = await this.reservationsService.findById(id);
-    if (!r || (r as any).userId !== user.sub) {
+    if (!r || r.userId !== user.sub) {
       throw new NotFoundException("Reservation not found");
     }
     if (
-      (r as any).status === ReservationStatus.Cancelled ||
-      (r as any).status === ReservationStatus.Completed
+      r.status === ReservationStatus.Cancelled ||
+      r.status === ReservationStatus.Completed
     ) {
-      return r as any;
+      return r;
     }
-    this.logger.log(`cancelMyReservation id=${id} user=${user.sub}`);
-    return this.reservationsService.setStatus(id, ReservationStatus.Cancelled);
+    this.logger.log(`cancelMyReservation id=${id} user=${user.sub} version=${version}`);
+    return this.reservationsService.setStatus(id, ReservationStatus.Cancelled, version);
   }
 }

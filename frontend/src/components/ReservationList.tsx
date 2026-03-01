@@ -34,7 +34,7 @@ export const ReservationList: React.FC<Props> = ({ date, status }) => {
     {
       variables: isEmployee ? { date, status } : undefined,
       fetchPolicy: "cache-and-network",
-    }
+    },
   );
 
   const [setStatus] = useMutation(MUTATION_SET_STATUS, {
@@ -100,7 +100,9 @@ export const ReservationList: React.FC<Props> = ({ date, status }) => {
                     key: s,
                     label: s,
                     onClick: () =>
-                      setStatus({ variables: { id: r._id, status: s } }),
+                      setStatus({
+                        variables: { id: r._id, status: s, version: r.version },
+                      }),
                   })),
                 }}
               >
@@ -111,7 +113,7 @@ export const ReservationList: React.FC<Props> = ({ date, status }) => {
         ),
       },
     ],
-    [isEmployee]
+    [isEmployee],
   );
 
   return (

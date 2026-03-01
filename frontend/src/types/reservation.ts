@@ -13,6 +13,7 @@ export interface Reservation {
   expectedArrival: string;
   tableSize: number;
   status: ReservationStatus;
+  version: number;
 }
 
 export interface CreateReservationInput {
