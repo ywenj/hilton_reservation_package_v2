@@ -16,6 +16,9 @@ type Reservation {
   expectedArrival: String!
   tableSize: Int!
   status: ReservationStatus!
+
+  """Reservation detail loaded via DataLoader (N+1 safe)"""
+  detail: ReservationDetail
 }
 
 enum ReservationStatus {
@@ -23,6 +26,25 @@ enum ReservationStatus {
   Approved
   Completed
   Cancelled
+}
+
+type ReservationDetail {
+  _id: ID!
+
+  """Associated reservation ID"""
+  reservationId: String!
+
+  """Seating preference (e.g. window, patio)"""
+  seatingPreference: String
+
+  """Special occasion (e.g. birthday, anniversary)"""
+  occasion: String
+
+  """Dietary requirements (e.g. vegetarian, gluten-free)"""
+  dietaryRequirements: String
+
+  """Additional notes or special requests"""
+  specialRequests: String
 }
 
 type Query {
