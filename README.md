@@ -20,7 +20,7 @@ graph LR
 
     Cache["⚡ Token Cache<br/>TTL: 30s<br/><br/>Introspection<br/>Result Cache"]
 
-    MongoDB["<b>🗄️ MongoDB</b><br/><b>Data Storage</b><br/>Port: 27017<br/><br/>• Users Collection<br/>• Reservations Collection<br/>• Tokens & Sessions"]
+    MongoDB["<b>🗄️ MongoDB</b><br/><b>Data Storage</b><br/>Port: 27017<br/><br/>• Users Collection<br/>• Reservations Collection<br/>• ReservationDetails Collection"]
 
     Browser -->|REST: POST /auth/| Frontend
     Browser -->|GraphQL: with JWT| ReservationService
@@ -49,7 +49,7 @@ graph LR
 - **Frontend**：React + Vite 前端应用，通过 Apollo Client 与后端通信
 - **Auth Service**：独立的认证服务，负责用户注册、登录、Token 校验
 - **Reservation Service**：核心业务服务，提供 GraphQL API，通过 introspection 调用 Auth Service 验证 Token
-- **🗄️ MongoDB**：共享数据库存储，采用特殊图标标识，存储用户、预约、Token 等数据
+- **🗄️ MongoDB**：共享数据库存储，存储用户（Users）、预约（Reservations）及预约详情（ReservationDetails）三个 Collection；JWT 为无状态令牌，不持久化到数据库
 - **Token Cache**：减少频繁调用 Auth Service 的 introspection 端点，提升性能
 
 ### 关键交互流程
@@ -74,7 +74,7 @@ graph LR
 | 查看个人预约 | ✅    | ✅       |
 | 创建预约     | ✅    | ✅       |
 | 管理全部预约 | ❌    | ✅       |
-| 修改预约状态 | ❌    | ✅       |
+| 修改预约状态 | ✅    | ✅       |
 
 ---
 

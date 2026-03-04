@@ -12,7 +12,7 @@ dotenv.config({ path: ".env" });
     CacheModule.register({
       // 默认 TTL 秒：与 IntrospectionClient 内部 ttlMs 保持一致（30s）。可通过环境变量覆盖。
       ttl: Math.ceil(
-        (Number(process.env.INTROSPECTION_CACHE_TTL_MS) || 30000) / 1000
+        (Number(process.env.INTROSPECTION_CACHE_TTL_MS) || 30000) / 1000,
       ),
       isGlobal: true,
     }),
