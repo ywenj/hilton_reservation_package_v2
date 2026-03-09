@@ -34,10 +34,11 @@ export class ReservationsService {
     this.logger.debug(
       `Create reservation userId=${input.userId} tableSize=${input.tableSize}`,
     );
-    const created = await this.reservationModel.create({
+    const doc = new this.reservationModel({
       ...input,
       status: ReservationStatus.Requested,
     });
+    const created = await doc.save();
     this.logger.log(`Reservation created id=${created._id}`);
     return created;
   }
